@@ -1,13 +1,13 @@
-name: Build BHTikTok++
+name: 构建 BHTikTok++
 
 on:
   push:
     branches: [ main ]
+    tags:
+      - 'v*'
   pull_request:
     branches: [ main ]
   workflow_dispatch:
-  tags:
-    - 'v*'
 
 jobs:
   build:
