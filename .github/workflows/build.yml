@@ -36,6 +36,9 @@ jobs:
             git clone https://github.com/theos/sdks.git "$THEOS/sdks"
           fi
 
+      - name: Export THEOS env
+        run: echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+
       - name: Build package
         run: |
           make package
