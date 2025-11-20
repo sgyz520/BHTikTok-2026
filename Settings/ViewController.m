@@ -9,6 +9,7 @@
 #import "CountryTable.h"
 #import "LiveActions.h"
 #import "PlaybackSpeed.h"
+#import "BHIManager.h"
 
 @interface ViewController ()
 @property (nonatomic, strong) UITableView *staticTable;
