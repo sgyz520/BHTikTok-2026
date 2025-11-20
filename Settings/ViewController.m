@@ -5,7 +5,7 @@
 //  Created by raul on 08/10/2024.
 //
 
-#import "ViewController.h"
+#import "Settings/ViewController.h"
 #import "CountryTable.h"
 #import "LiveActions.h"
 #import "PlaybackSpeed.h"

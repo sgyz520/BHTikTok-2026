@@ -6,7 +6,17 @@ include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = BHTikTok
 
-BHTikTok_FILES = Tweak.x $(wildcard *.m JGProgressHUD/*.m Settings/*.m)
+BHTikTok_FILES = \
+  Tweak.x \
+  BHDownload.m \
+  BHMultipleDownload.m \
+  BHIManager.m \
+  SecurityViewController.m \
+  $(wildcard JGProgressHUD/*.m) \
+  Settings/CountryTable.m \
+  Settings/LiveActions.m \
+  Settings/PlaybackSpeed.m \
+  Settings/ViewController.m
 BHTikTok_FRAMEWORKS = UIKit Foundation CoreGraphics Photos CoreServices SystemConfiguration SafariServices Security QuartzCore
 BHTikTok_CFLAGS = -fobjc-arc -Wno-unused-variable -Wno-unused-value -Wno-deprecated-declarations -Wno-nullability-completeness -Wno-unused-function -Wno-incompatible-pointer-types -I$(CURDIR)/Settings
 BHTikTok_RESOURCE_DIRS = Resources
