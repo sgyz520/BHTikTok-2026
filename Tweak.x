@@ -1032,26 +1032,6 @@ static BOOL isAuthenticationShowed = FALSE;
 }
 %end
 %hook AWEPlayInteractionAuthorView
-%new - (NSString *)emojiForCountryCode:(NSString *)countryCode {
-    // Convert the country code to uppercase
-    NSString *uppercaseCountryCode = [countryCode uppercaseString];
-    
-    // Ensure the country code has exactly two characters
-    if (uppercaseCountryCode.length != 2) {
-        return nil;
-    }
-    
-    // Convert the country code to the regional indicator symbols
-    uint32_t firstLetter = [uppercaseCountryCode characterAtIndex:0] + 0x1F1E6 - 'A';
-    uint32_t secondLetter = [uppercaseCountryCode characterAtIndex:1] + 0x1F1E6 - 'A';
-    
-    // Create the emoji using the regional indicator symbols
-    NSString *flagEmoji = [[NSString alloc] initWithBytes:&firstLetter length:4 encoding:NSUTF32LittleEndianStringEncoding];
-    flagEmoji = [flagEmoji stringByAppendingString:[[NSString alloc] initWithBytes:&secondLetter length:4 encoding:NSUTF32LittleEndianStringEncoding]];
-    
-    return flagEmoji;
-}
-
 - (void)layoutSubviews {
     %orig;
     if ([BHIManager uploadRegion]){
