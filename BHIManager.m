@@ -211,4 +211,24 @@
     NSNumber *number = [NSNumber numberWithFloat:per];
     return [numberFormatter stringFromNumber:number];
 }
+
+static NSDictionary *bh_cn_strings;
+static NSString *bh_cn_lookup(NSString *key) {
+    if (!bh_cn_strings) {
+        NSString *paths[] = {
+            @"/Library/Application Support/BHTikTok/zh-Hans.lproj/Localizable.strings",
+            @"/Library/Application Support/TF-TikTok/zh-Hans.lproj/Localizable.strings"
+        };
+        for (int i = 0; i < 2; i++) {
+            NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:paths[i]];
+            if (dict) { bh_cn_strings = dict; break; }
+        }
+    }
+    NSString *v = bh_cn_strings[key];
+    return v ?: key;
+}
+
++ (NSString *)L:(NSString *)key {
+    return bh_cn_lookup(key);
+}
 @end

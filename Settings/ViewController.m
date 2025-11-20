@@ -22,7 +22,7 @@
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor systemBackgroundColor];
     
-    self.title = NSLocalizedString(@"BHTikTok++ Settings", nil);
+    self.title = [BHIManager L:@"TF-TikTok Settings"];
     self.staticTable = [[UITableView alloc] initWithFrame:CGRectZero ];
     self.staticTable.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:self.staticTable];
@@ -52,22 +52,22 @@
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     switch (section) {
         case 0:
-            return NSLocalizedString(@"Feed", nil);
+            return [BHIManager L:@"Feed"];
         case 1:
-            return NSLocalizedString(@"Profile", nil);
+            return [BHIManager L:@"Profile"];
         case 2:
-            return NSLocalizedString(@"Confirm Settings", nil);
+            return [BHIManager L:@"Confirm Settings"];
         case 3:
-            return NSLocalizedString(@"Other", nil);
+            return [BHIManager L:@"Other"];
         case 4:
-            return NSLocalizedString(@"Region", nil);
+            return [BHIManager L:@"Region"];
             break;
         case 5:
-            return NSLocalizedString(@"Live Button Function", nil);
+            return [BHIManager L:@"Live Button Function"];
         case 6:
-            return NSLocalizedString(@"Playback Speed", nil);
+            return [BHIManager L:@"Playback Speed"];
         case 7:
-            return NSLocalizedString(@"Developer", nil);
+            return [BHIManager L:@"Developer"];
         default:
             break;
     }
@@ -324,7 +324,7 @@
             case 1: {
                 NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
                 UITableViewCell *regions = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
-                regions.textLabel.text = NSLocalizedString(@"Regions", nil);
+                regions.textLabel.text = [BHIManager L:@"Regions"];
                 NSDictionary *selectedRegion = [defaults dictionaryForKey:@"region"];
                 regions.detailTextLabel.text = [NSString stringWithFormat:@"%@", selectedRegion[@"area"]];
                 return regions;
@@ -343,7 +343,7 @@
                 UITableViewCell *liveAction = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
                 liveAction.textLabel.text = NSLocalizedString(@"Actions", nil);
                 NSString *selectedLiveAction = [defaults valueForKey:@"live_action"];
-                NSArray *liveFuncTitles = @[NSLocalizedString(@"Default", nil), NSLocalizedString(@"BHTikTok++ Settings", nil), NSLocalizedString(@"Playback Speed", nil)];
+                NSArray *liveFuncTitles = @[[BHIManager L:@"Default"], [BHIManager L:@"TF-TikTok Settings"], [BHIManager L:@"Playback Speed"]];
                 if (selectedLiveAction != nil) {
                     liveAction.detailTextLabel.text = [NSString stringWithFormat:@"%@", [liveFuncTitles objectAtIndex:[selectedLiveAction integerValue]]];
                 }
@@ -363,7 +363,7 @@
             }
             case 1: {
                 UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
-                cell.textLabel.text = NSLocalizedString(@"Speeds", nil);
+                cell.textLabel.text = [BHIManager L:@"Speeds"];
                 
                 NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
                 NSString *selectedSpeed = [defaults valueForKey:@"playback_speed"];
@@ -466,9 +466,9 @@
     
     
     
-    cell.textLabel.text = NSLocalizedString(title, nil);
+    cell.textLabel.text = [BHIManager L:title];
     cell.detailTextLabel.numberOfLines = 0;
-    cell.detailTextLabel.text = NSLocalizedString(detail, nil);
+    cell.detailTextLabel.text = [BHIManager L:detail];
     cell.detailTextLabel.textColor = [UIColor grayColor];
     return cell;
     

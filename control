@@ -1,5 +1,5 @@
-Package: com.raulsaeed.bhtiktok++
-Name: BHTikTok++
+Package: com.raulsaeed.tftiktok
+Name: TF-TikTok
 Version: 1.5
 Architecture: iphoneos-arm
 Description: An awesome tweak for TikTok!

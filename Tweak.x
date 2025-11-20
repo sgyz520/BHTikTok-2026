@@ -307,8 +307,8 @@ static BOOL isAuthenticationShowed = FALSE;
         TTKSettingsBaseCellPlugin *BHTikTokSettingsPluginCell = [[CellClass alloc] initWithPluginContext:self.context];
 
         AWESettingItemModel *BHTikTokSettingsItemModel = [[ItemClass alloc] initWithIdentifier:@"bhtiktok_settings"];
-        [BHTikTokSettingsItemModel setTitle:NSLocalizedString(@"BHTikTok++ settings", nil)];
-        [BHTikTokSettingsItemModel setDetail:NSLocalizedString(@"BHTikTok++ settings", nil)];
+        [BHTikTokSettingsItemModel setTitle:[BHIManager L:@"TF-TikTok Settings"]];
+        [BHTikTokSettingsItemModel setDetail:[BHIManager L:@"TF-TikTok Settings"]];
         [BHTikTokSettingsItemModel setIconImage:[UIImage systemImageNamed:@"gear"]];
         [BHTikTokSettingsItemModel setType:99];
 
@@ -771,19 +771,7 @@ static BOOL isAuthenticationShowed = FALSE;
             AWEUserModel *authorModel = model.author;
             NSString *nickname = authorModel.nickname;
             NSString *username = authorModel.socialName;
-            NSString *textOut = username;
-            if ([BHIManager uploadRegion]) {
-                NSString *regionCode = model.region;
-                if (!regionCode) {
-                    NSDictionary *selectedRegion = [BHIManager selectedRegion];
-                    regionCode = selectedRegion[@"code"];
-                }
-                NSString *flag = flagEmojiForCountryCode(regionCode);
-                if (flag) {
-                    textOut = [NSString stringWithFormat:@"%@ %@", username ?: arg1, flag];
-                }
-            }
-            %orig(textOut);
+            %orig(username ?: arg1);
         }else {
             %orig;
         }
@@ -1035,27 +1023,30 @@ static BOOL isAuthenticationShowed = FALSE;
 - (void)layoutSubviews {
     %orig;
     if ([BHIManager uploadRegion]){
-        for (int i = 0; i < [[self subviews] count]; i ++){
-            id j = [[self subviews] objectAtIndex:i];
-            if ([j isKindOfClass:%c(UIStackView)]){
-                CGRect frame = [j frame];
-                frame.origin.x = 39.5; 
-                [j setFrame:frame];
-            }else {
-                [[self viewWithTag:666] removeFromSuperview];
-            }
-        }
         [[self viewWithTag:666] removeFromSuperview];
         AWEFeedCellViewController* rootVC = self.yy_viewController;
         AWEAwemeModel *model = rootVC.model;
-        NSString *countryID = model.region;
-        UILabel *uploadLabel = [[UILabel alloc]initWithFrame:CGRectMake(0,2,39.5,20.5)];
-        NSString *countryEmoji = flagEmojiForCountryCode(countryID);
-        uploadLabel.text = [NSString stringWithFormat:@"%@ •",countryEmoji];
-        uploadLabel.tag = 666;
-        [uploadLabel setTextColor: [UIColor whiteColor]];
-        [uploadLabel sizeToFit];
-        [self addSubview:uploadLabel];
+        NSDictionary *selectedRegion = [BHIManager selectedRegion];
+        NSString *country = selectedRegion[@"name"] ?: model.region;
+        NSString *area = selectedRegion[@"area"] ?: @"";
+        NSString *text = country ?: @"";
+        if (area.length > 0 && ![area isEqualToString:country]) {
+            text = [NSString stringWithFormat:@"%@ %@", country, area];
+        }
+        UILabel *regionLabel = [[UILabel alloc] init];
+        regionLabel.tag = 666;
+        regionLabel.text = text;
+        regionLabel.textColor = [UIColor whiteColor];
+        regionLabel.font = [UIFont systemFontOfSize:12 weight:UIFontWeightRegular];
+        [regionLabel sizeToFit];
+        UIStackView *stack = (UIStackView *)[self.subviews filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(UIView *v, NSDictionary *_) { return [v isKindOfClass:%c(UIStackView)]; }]].firstObject;
+        if (stack) {
+            CGRect f = stack.frame;
+            regionLabel.frame = CGRectMake(f.origin.x, CGRectGetMaxY(f)+2, regionLabel.bounds.size.width, regionLabel.bounds.size.height);
+        } else {
+            regionLabel.frame = CGRectMake(40, 22, regionLabel.bounds.size.width, regionLabel.bounds.size.height);
+        }
+        [self addSubview:regionLabel];
     }
 }
 %end
