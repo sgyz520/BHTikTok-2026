@@ -98,6 +98,30 @@
 + (NSDictionary *)selectedRegion {
     return [[NSUserDefaults standardUserDefaults] dictionaryForKey:@"region"];
 }
+static NSDictionary *bh_region_overrides;
+static NSDictionary *bh_load_overrides() {
+    if (!bh_region_overrides) {
+        NSArray<NSString *> *paths = @[
+            @"/Library/Application Support/BHTikTok/_地区/overrides.zh.json",
+            @"/var/jb/Library/Application Support/BHTikTok/_地区/overrides.zh.json"
+        ];
+        for (NSString *p in paths) {
+            NSData *d = [NSData dataWithContentsOfFile:p];
+            if (d) {
+                NSDictionary *j = [NSJSONSerialization JSONObjectWithData:d options:0 error:nil];
+                if ([j isKindOfClass:[NSDictionary class]]) { bh_region_overrides = j; break; }
+            }
+        }
+        if (!bh_region_overrides) bh_region_overrides = @{};
+    }
+    return bh_region_overrides;
+}
++ (NSString *)localizedSubdivisionNameForCountryCode:(NSString *)cc code:(NSString *)subCode default:(NSString *)fallback {
+    NSDictionary *ov = bh_load_overrides();
+    NSDictionary *country = ov[cc ?: @""];
+    NSString *zh = country[subCode ?: @""];
+    return zh ?: fallback ?: @"";
+}
 + (BOOL)fakeChangesEnabled {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"en_fake"];
 }
