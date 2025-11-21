@@ -20,5 +20,6 @@ BHTikTok_FILES = \
 BHTikTok_FRAMEWORKS = UIKit Foundation CoreGraphics Photos CoreServices SystemConfiguration SafariServices Security QuartzCore
 BHTikTok_CFLAGS = -fobjc-arc -Wno-unused-variable -Wno-unused-value -Wno-deprecated-declarations -Wno-nullability-completeness -Wno-unused-function -Wno-incompatible-pointer-types -I$(CURDIR)/Settings
 BHTikTok_RESOURCE_DIRS = Resources
+BHTikTok_INSTALL_PATH = /Library/Application Support/BHTikTok
 
 include $(THEOS_MAKE_PATH)/tweak.mk
