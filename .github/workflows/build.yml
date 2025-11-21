@@ -43,7 +43,7 @@ jobs:
       - name: Sync region and locale resources
         run: |
           set -euo pipefail
-          PROJECT_DIR="BHtiktok-2026"
+          PROJECT_DIR="."
           RES_DIR="$PROJECT_DIR/Resources"
           mkdir -p "$RES_DIR"
           if [ -d "_地区" ]; then
@@ -55,6 +55,11 @@ jobs:
             rsync -a --delete "dist/_locales/" "$RES_DIR/_locales/"
           fi
 
+      - name: List resources
+        run: |
+          set -euo pipefail
+          echo "Resources tree:" && find Resources -maxdepth 3 -type f -print || true
+
       - name: Build package
         run: |
           make package
@@ -64,7 +69,7 @@ jobs:
           set -euo pipefail
           PKG=$(ls packages/*.deb | head -n1)
           dpkg-deb -c "$PKG" | tee pkg_contents.txt
-          if ! grep -E "zh-Hans\.lproj/Localizable\.strings|/_地区/|/_locales/" pkg_contents.txt > /dev/null; then
+          if ! grep -E "Library/Application Support/BHTikTok/|zh-Hans\.lproj/Localizable\.strings|/_地区/|/_locales/" pkg_contents.txt > /dev/null; then
             echo "Missing language/region resources in package"
             exit 1
           fi
