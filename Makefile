@@ -1,4 +1,4 @@
-TARGET := iphone:clang:14.4
+TARGET := iphone:clang:latest
 INSTALL_TARGET_PROCESSES = TikTok
 THEOS_DEVICE_IP = 192.168.100.246
 THEOS_DEVICE_USER = root
