@@ -342,7 +342,7 @@
             case 1: {
                 NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
                 UITableViewCell *liveAction = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
-                liveAction.textLabel.text = NSLocalizedString(@"Actions", nil);
+                liveAction.textLabel.text = [BHIManager L:@"Actions"];
                 NSString *selectedLiveAction = [defaults valueForKey:@"live_action"];
                 NSArray *liveFuncTitles = @[[BHIManager L:@"Default"], [BHIManager L:@"TF-TikTok Settings"], [BHIManager L:@"Playback Speed"]];
                 if (selectedLiveAction != nil) {

@@ -57,6 +57,8 @@
 "Actions" = "操作";
 "Default" = "默认";
 "Speeds" = "速度";
+"Change The Default Live Button Action" = "更改默认直播按钮行为";
+"Enable Presistent Playback Speed." = "启用持久化播放速度。";
 "Downloads Menu" = "下载菜单";
 "Copy Menu" = "复制菜单";
 "Downloading" = "正在下载";

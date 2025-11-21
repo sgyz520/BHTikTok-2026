@@ -15,7 +15,7 @@ static void showAlert(NSString *title, NSString *message, NSString *okTitle, NSS
 }
 
 static void showConfirmation(void (^okHandler)(void)) {
-  showAlert(NSLocalizedString(@"BHTikTok, Hi", nil), NSLocalizedString(@"Are you sure?", nil), NSLocalizedString(@"Yes", nil), NSLocalizedString(@"No", nil), okHandler);
+  showAlert([BHIManager L:@"BHTikTok, Hi"], [BHIManager L:@"Are you sure?"], [BHIManager L:@"Yes"], [BHIManager L:@"No"], okHandler);
 }
 
 static NSString *flagEmojiForCountryCode(NSString *code) {
@@ -226,7 +226,7 @@ static BOOL isAuthenticationShowed = FALSE;
 }
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
     if (sender.state == UIGestureRecognizerStateBegan) {
-        showAlert(NSLocalizedString(@"Save profile image", nil), NSLocalizedString(@"Do you want to save this image", nil), NSLocalizedString(@"Yes", nil), NSLocalizedString(@"No", nil), ^{
+        showAlert([BHIManager L:@"Save profile image"], [BHIManager L:@"Do you want to save this image"], [BHIManager L:@"Yes"], [BHIManager L:@"No"], ^{
             UIImageWriteToSavedPhotosAlbum([self bd_baseImage], self, @selector(image:didFinishSavingWithError:contextInfo:), nil);
         });
     }
@@ -264,7 +264,7 @@ static BOOL isAuthenticationShowed = FALSE;
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
     if (sender.state == UIGestureRecognizerStateBegan) {
         NSString *profileDescription = [self text];
-        showAlert(NSLocalizedString(@"Copy bio", nil), NSLocalizedString(@"Do you want to copy this text to clipboard", nil), NSLocalizedString(@"Yes", nil), NSLocalizedString(@"No", nil), ^{
+        showAlert([BHIManager L:@"Copy bio"], [BHIManager L:@"Do you want to copy this text to clipboard"], [BHIManager L:@"Yes"], [BHIManager L:@"No"], ^{
              if (profileDescription) {
                 UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
                 pasteboard.string = profileDescription;
@@ -1039,12 +1039,29 @@ static BOOL isAuthenticationShowed = FALSE;
         regionLabel.textColor = [UIColor whiteColor];
         regionLabel.font = [UIFont systemFontOfSize:12 weight:UIFontWeightRegular];
         [regionLabel sizeToFit];
-        UIStackView *stack = (UIStackView *)[self.subviews filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(UIView *v, NSDictionary *_) { return [v isKindOfClass:%c(UIStackView)]; }]].firstObject;
-        if (stack) {
-            CGRect f = stack.frame;
-            regionLabel.frame = CGRectMake(f.origin.x, CGRectGetMaxY(f)+2, regionLabel.bounds.size.width, regionLabel.bounds.size.height);
+        UILabel *(^findOriginalLabel)(UIView *) = ^UILabel*(UIView *v) {
+            for (UIView *sv in v.subviews) {
+                if ([sv isKindOfClass:%c(UILabel)]) {
+                    UILabel *l = (UILabel *)sv;
+                    if ([l.text isEqualToString:@"查看原内容"]) { return l; }
+                }
+                UILabel *r = findOriginalLabel(sv);
+                if (r) return r;
+            }
+            return nil;
+        };
+        UILabel *anchor = findOriginalLabel(self);
+        if (anchor) {
+            CGRect af = anchor.frame;
+            regionLabel.frame = CGRectMake(af.origin.x, CGRectGetMaxY(af)+2, regionLabel.bounds.size.width, regionLabel.bounds.size.height);
         } else {
-            regionLabel.frame = CGRectMake(40, 22, regionLabel.bounds.size.width, regionLabel.bounds.size.height);
+            UIStackView *stack = (UIStackView *)[self.subviews filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(UIView *v, NSDictionary *_) { return [v isKindOfClass:%c(UIStackView)]; }]].firstObject;
+            if (stack) {
+                CGRect f = stack.frame;
+                regionLabel.frame = CGRectMake(f.origin.x, CGRectGetMaxY(f)+2, regionLabel.bounds.size.width, regionLabel.bounds.size.height);
+            } else {
+                regionLabel.frame = CGRectMake(40, 22, regionLabel.bounds.size.width, regionLabel.bounds.size.height);
+            }
         }
         [self addSubview:regionLabel];
     }
