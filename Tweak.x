@@ -1039,18 +1039,18 @@ static BOOL isAuthenticationShowed = FALSE;
         regionLabel.textColor = [UIColor whiteColor];
         regionLabel.font = [UIFont systemFontOfSize:12 weight:UIFontWeightRegular];
         [regionLabel sizeToFit];
-        UILabel *(^findOriginalLabel)(UIView *) = ^UILabel*(UIView *v) {
-            for (UIView *sv in v.subviews) {
-                if ([sv isKindOfClass:%c(UILabel)]) {
-                    UILabel *l = (UILabel *)sv;
-                    if ([l.text isEqualToString:@"查看原内容"]) { return l; }
-                }
-                UILabel *r = findOriginalLabel(sv);
-                if (r) return r;
+        UILabel *anchor = nil;
+        NSMutableArray *stackViews = [NSMutableArray arrayWithObject:self];
+        while (stackViews.count) {
+            UIView *v = [stackViews lastObject];
+            [stackViews removeLastObject];
+            if ([v isKindOfClass:%c(UILabel)]) {
+                UILabel *l = (UILabel *)v;
+                NSString *t = l.text ?: @"";
+                if ([t isEqualToString:@"查看原内容"] || [t caseInsensitiveCompare:@"View original"] == NSOrderedSame) { anchor = l; break; }
             }
-            return nil;
-        };
-        UILabel *anchor = findOriginalLabel(self);
+            for (UIView *sv in v.subviews) { [stackViews addObject:sv]; }
+        }
         if (anchor) {
             CGRect af = anchor.frame;
             regionLabel.frame = CGRectMake(af.origin.x, CGRectGetMaxY(af)+2, regionLabel.bounds.size.width, regionLabel.bounds.size.height);
