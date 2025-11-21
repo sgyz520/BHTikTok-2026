@@ -1066,7 +1066,7 @@ static BOOL isAuthenticationShowed = FALSE;
         [self addHideElementButton];
     }
     if ([BHIManager uploadRegion]) {
-        [self addOrUpdateRegionDateLabel];
+        [(id)self addOrUpdateRegionDateLabel];
     } else {
         [[self viewWithTag:668] removeFromSuperview];
     }
@@ -1081,7 +1081,7 @@ static BOOL isAuthenticationShowed = FALSE;
         [self addHideElementButton];
     }
     if ([BHIManager uploadRegion]) {
-        [self addOrUpdateRegionDateLabel];
+        [(id)self addOrUpdateRegionDateLabel];
     } else {
         [[self viewWithTag:668] removeFromSuperview];
     }
@@ -1120,7 +1120,7 @@ static BOOL isAuthenticationShowed = FALSE;
     NSString *rt = country ?: @"";
     if (area.length > 0 && ![area isEqualToString:country]) { rt = [NSString stringWithFormat:@"%@ %@", country, area]; }
     NSNumber *ct = m.createTime;
-    NSString *dt = [self bh_formatDateTime:[ct doubleValue]];
+    NSString *dt = [(id)self bh_formatDateTime:[ct doubleValue]];
     NSString *text = [NSString stringWithFormat:@"%@    %@", rt, dt];
     UILabel *label = [[UILabel alloc] init];
     label.tag = 668;
