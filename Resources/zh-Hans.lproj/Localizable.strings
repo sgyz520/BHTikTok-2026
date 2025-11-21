@@ -96,6 +96,9 @@
 "FEATURE_CONFIRM_COMMENT_DISLIKE" = "评论点踩前进行确认";
 "FEATURE_CONFIRM_FOLLOW" = "关注前进行确认";
 "Enable Embedded Links" = "启用嵌入式链接";
+"Backgrounding ✌️" = "后台处理中 ✌️";
+"Video Count:" = "视频数量：";
+"Downloading" = "正在下载";
 "Live Button Action" = "直播按钮行为";
 "Follower:" = "粉丝：";
 "Following:" = "关注：";

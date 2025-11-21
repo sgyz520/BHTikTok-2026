@@ -215,12 +215,18 @@
 static NSDictionary *bh_cn_strings;
 static NSString *bh_cn_lookup(NSString *key) {
     if (!bh_cn_strings) {
-        NSString *paths[] = {
+        NSArray<NSString *> *paths = @[
             @"/Library/Application Support/BHTikTok/zh-Hans.lproj/Localizable.strings",
-            @"/Library/Application Support/TF-TikTok/zh-Hans.lproj/Localizable.strings"
-        };
-        for (int i = 0; i < 2; i++) {
-            NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:paths[i]];
+            @"/Library/Application Support/BHTikTok/Resources/zh-Hans.lproj/Localizable.strings",
+            @"/Library/Application Support/TF-TikTok/zh-Hans.lproj/Localizable.strings",
+            @"/Library/Application Support/TF-TikTok/Resources/zh-Hans.lproj/Localizable.strings",
+            @"/var/jb/Library/Application Support/BHTikTok/zh-Hans.lproj/Localizable.strings",
+            @"/var/jb/Library/Application Support/BHTikTok/Resources/zh-Hans.lproj/Localizable.strings",
+            @"/var/jb/Library/Application Support/TF-TikTok/zh-Hans.lproj/Localizable.strings",
+            @"/var/jb/Library/Application Support/TF-TikTok/Resources/zh-Hans.lproj/Localizable.strings"
+        ];
+        for (NSString *p in paths) {
+            NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:p];
             if (dict) { bh_cn_strings = dict; break; }
         }
     }
