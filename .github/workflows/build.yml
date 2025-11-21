@@ -19,7 +19,8 @@ jobs:
       - name: Install build dependencies
         run: |
           brew update
-          brew install ldid dpkg gnu-sed
+          brew install ldid dpkg gnu-sed make
+          echo "PATH=$(brew --prefix make)/libexec/gnubin:$PATH" >> $GITHUB_ENV
 
       - name: Set up Theos
         run: |
@@ -39,9 +40,34 @@ jobs:
       - name: Export THEOS env
         run: echo "THEOS=$HOME/theos" >> $GITHUB_ENV
 
+      - name: Sync region and locale resources
+        run: |
+          set -euo pipefail
+          PROJECT_DIR="BHtiktok-2026"
+          RES_DIR="$PROJECT_DIR/Resources"
+          mkdir -p "$RES_DIR"
+          if [ -d "_地区" ]; then
+            mkdir -p "$RES_DIR/_地区"
+            rsync -a --delete "_地区/" "$RES_DIR/_地区/"
+          fi
+          if [ -d "dist/_locales" ]; then
+            mkdir -p "$RES_DIR/_locales"
+            rsync -a --delete "dist/_locales/" "$RES_DIR/_locales/"
+          fi
+
       - name: Build package
         run: |
           make package
+
+      - name: Verify resources inside package
+        run: |
+          set -euo pipefail
+          PKG=$(ls packages/*.deb | head -n1)
+          dpkg-deb -c "$PKG" | tee pkg_contents.txt
+          if ! grep -E "zh-Hans\.lproj/Localizable\.strings|/_地区/|/_locales/" pkg_contents.txt > /dev/null; then
+            echo "Missing language/region resources in package"
+            exit 1
+          fi
 
       - name: Upload .deb artifact
         uses: actions/upload-artifact@v4
