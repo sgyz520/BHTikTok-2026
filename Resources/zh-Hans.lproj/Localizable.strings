@@ -96,3 +96,17 @@
 "FEATURE_CONFIRM_COMMENT_DISLIKE" = "评论点踩前进行确认";
 "FEATURE_CONFIRM_FOLLOW" = "关注前进行确认";
 "Enable Embedded Links" = "启用嵌入式链接";
+"Live Button Action" = "直播按钮行为";
+"Follower:" = "粉丝：";
+"Following:" = "关注：";
+"Enter follower count" = "输入粉丝数量";
+"Enter following count" = "输入关注数量";
+"Github Page" = "Github 页面";
+"X Page" = "X 页面";
+"Buy Me A Coffe" = "请我喝咖啡";
+"To keep me Motivated and the Tweak Updated." = "支持我保持动力并持续更新此插件。";
+"FEATURE_FAKE_CHANGES" = "启用虚拟更改";
+"FEATURE_EXTENDED_COMMENTS" = "扩展评论长度";
+"FEATURE_UPLOAD_HD" = "开启高清上传";
+"FEATURE_APP_LOCK" = "应用锁";
+"FEATURE_ENABLE_FLEX" = "启用 FLEX";

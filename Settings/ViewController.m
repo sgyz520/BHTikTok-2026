@@ -220,13 +220,13 @@
                 UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
                 
                 UILabel *followerLabel = [[UILabel alloc] init];
-                followerLabel.text = @"Follower:";
+                followerLabel.text = [BHIManager L:@"Follower:"];
                 followerLabel.font = [UIFont systemFontOfSize:16];
                 followerLabel.translatesAutoresizingMaskIntoConstraints = NO;
                 [cell.contentView addSubview:followerLabel];
                 
                 UITextField *textField = [[UITextField alloc] init];
-                textField.placeholder = @"Enter follower count";
+                textField.placeholder = [BHIManager L:@"Enter follower count"];
                 textField.borderStyle = UITextBorderStyleRoundedRect;
                 textField.delegate = self;
                 textField.tag = 2;
@@ -256,13 +256,13 @@
                 UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
                 
                 UILabel *followingLabel = [[UILabel alloc] init];
-                followingLabel.text = @"Following:";
+                followingLabel.text = [BHIManager L:@"Following:"];
                 followingLabel.font = [UIFont systemFontOfSize:16];
                 followingLabel.translatesAutoresizingMaskIntoConstraints = NO;
                 [cell.contentView addSubview:followingLabel];
                 
                 UITextField *textField = [[UITextField alloc] init];
-                textField.placeholder = @"Enter following count";
+                textField.placeholder = [BHIManager L:@"Enter following count"];
                 textField.borderStyle = UITextBorderStyleRoundedRect;
                 textField.delegate = self;
                 textField.tag = 1;
@@ -379,27 +379,27 @@
         switch (indexPath.row) {
             case 0: {
                 UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
-                cell.textLabel.text = @"Raul Saeed";
+                cell.textLabel.text = [BHIManager L:@"Raul Saeed"];
                 cell.textLabel.textColor = [UIColor systemBlueColor];
-                cell.detailTextLabel.text = @"Github Page";
+                cell.detailTextLabel.text = [BHIManager L:@"Github Page"];
                 cell.imageView.image = [UIImage systemImageNamed:@"link"];
                 cell.detailTextLabel.textColor = [UIColor systemGrayColor];
                 return cell;
             }
             case 1: {
                 UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
-                cell.textLabel.text = @"Raul Saeed";
+                cell.textLabel.text = [BHIManager L:@"Raul Saeed"];
                 cell.textLabel.textColor = [UIColor systemBlueColor];
-                cell.detailTextLabel.text = @"X Page";
+                cell.detailTextLabel.text = [BHIManager L:@"X Page"];
                 cell.imageView.image = [UIImage systemImageNamed:@"link"];
                 cell.detailTextLabel.textColor = [UIColor systemGrayColor];
                 return cell;
             }
             case 2: {
                 UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
-                cell.textLabel.text = @"Buy Me A Coffe";
+                cell.textLabel.text = [BHIManager L:@"Buy Me A Coffe"];
                 cell.textLabel.textColor = [UIColor systemBlueColor];
-                cell.detailTextLabel.text = @"To keep me Motivated and the Tweak Updated.";
+                cell.detailTextLabel.text = [BHIManager L:@"To keep me Motivated and the Tweak Updated."];
                 cell.imageView.tintColor = [UIColor orangeColor];
                 cell.detailTextLabel.textColor = [UIColor systemGrayColor];
                 cell.imageView.image = [UIImage systemImageNamed:@"mug.fill"];
