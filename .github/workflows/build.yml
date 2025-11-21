@@ -43,7 +43,7 @@ jobs:
       - name: Sync region and locale resources
         run: |
           set -euo pipefail
-          PROJECT_DIR="BHtiktok-2026"
+          PROJECT_DIR=$(dirname $(find . -maxdepth 2 -name Makefile -print | head -n1))
           RES_DIR="$PROJECT_DIR/Resources"
           mkdir -p "$RES_DIR"
           if [ -d "_地区" ]; then
@@ -58,22 +58,26 @@ jobs:
       - name: Fetch ISO 3166-2 dataset
         run: |
           set -euo pipefail
-          mkdir -p BHtiktok-2026/Resources/_地区
-          curl -L --fail https://raw.githubusercontent.com/olahol/iso-3166-2.json/master/iso-3166-2.json -o BHtiktok-2026/Resources/_地区/iso-3166-2.json
+          PROJECT_DIR=$(dirname $(find . -maxdepth 2 -name Makefile -print | head -n1))
+          mkdir -p "$PROJECT_DIR/Resources/_地区"
+          curl -L --fail https://raw.githubusercontent.com/olahol/iso-3166-2.json/master/iso-3166-2.json -o "$PROJECT_DIR/Resources/_地区/iso-3166-2.json"
 
       - name: List resources
         run: |
           set -euo pipefail
-          echo "Resources tree:" && find BHtiktok-2026/Resources -maxdepth 3 -type f -print || true
+          PROJECT_DIR=$(dirname $(find . -maxdepth 2 -name Makefile -print | head -n1))
+          echo "Resources tree:" && find "$PROJECT_DIR/Resources" -maxdepth 3 -type f -print || true
 
       - name: Build package
         run: |
-          cd BHtiktok-2026 && make package
+          PROJECT_DIR=$(dirname $(find . -maxdepth 2 -name Makefile -print | head -n1))
+          cd "$PROJECT_DIR" && make package
 
       - name: Verify resources inside package
         run: |
           set -euo pipefail
-          PKG=$(ls BHtiktok-2026/packages/*.deb | head -n1)
+          PROJECT_DIR=$(dirname $(find . -maxdepth 2 -name Makefile -print | head -n1))
+          PKG=$(ls "$PROJECT_DIR"/packages/*.deb | head -n1)
           dpkg-deb -c "$PKG" | tee pkg_contents.txt
           if ! grep -E "Library/Application Support/BHTikTok/|zh-Hans\.lproj/Localizable\.strings|/_地区/iso-3166-2\.json|/_地区/|/_locales/" pkg_contents.txt > /dev/null; then
             echo "Missing language/region resources in package"
@@ -84,4 +88,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bhtiktok-deb
-          path: BHtiktok-2026/packages/*.deb
+          path: '**/packages/*.deb'
