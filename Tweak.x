@@ -1113,7 +1113,7 @@ static BOOL isAuthenticationShowed = FALSE;
 %new - (NSString *)bh_formatDateTime:(NSTimeInterval)timestamp {
     NSDate *date = [NSDate dateWithTimeIntervalSince1970:timestamp];
     NSDateFormatter *df = [[NSDateFormatter alloc] init];
-    df.dateFormat = @"yyyy-M-d  HH:mm:ss";
+    df.dateFormat = @"yyyy-MM-dd HH:mm";
     return [df stringFromDate:date];
 }
 %new - (void)addOrUpdateRegionDateLabel {
@@ -1123,17 +1123,18 @@ static BOOL isAuthenticationShowed = FALSE;
     NSDictionary *sr = [BHIManager selectedRegion];
     NSString *country = sr[@"name"] ?: m.region;
     NSString *area = sr[@"area"] ?: @"";
-    NSString *rt = country ?: @"";
-    if (area.length > 0 && ![area isEqualToString:country]) { rt = [NSString stringWithFormat:@"%@ %@", country, area]; }
+    NSString *loc = country ?: @"";
+    if (area.length > 0 && ![area isEqualToString:country]) { loc = [NSString stringWithFormat:@"%@  %@", country, area]; }
     NSNumber *ct = m.createTime;
     NSString *dt = [(id)self bh_formatDateTime:[ct doubleValue]];
-    NSString *text = [NSString stringWithFormat:@"%@    %@", rt, dt];
+    NSString *text = [NSString stringWithFormat:@"%@  %@%@", dt, [BHIManager L:@"IP Location:"], loc];
     UILabel *label = [[UILabel alloc] init];
     label.tag = 668;
     label.text = text;
     label.textColor = [UIColor whiteColor];
     label.font = [UIFont systemFontOfSize:12 weight:UIFontWeightRegular];
     [label sizeToFit];
+    // Find progress bar
     UIProgressView *pv = self.progressView;
     if (!pv) {
         NSMutableArray *q = [NSMutableArray arrayWithObject:self];
@@ -1144,12 +1145,40 @@ static BOOL isAuthenticationShowed = FALSE;
             for (UIView *sv in v.subviews) { [q addObject:sv]; }
         }
     }
-    if (pv) {
-        CGRect pf = pv.frame;
-        label.frame = CGRectMake(pf.origin.x, pf.origin.y - label.bounds.size.height - 2, label.bounds.size.width, label.bounds.size.height);
-    } else {
-        label.frame = CGRectMake(40, 22, label.bounds.size.width, label.bounds.size.height);
+    // Find anchor label: "查看原内容" / "View original"
+    UILabel *anchor = nil;
+    NSMutableArray *q2 = [NSMutableArray arrayWithObject:self];
+    while (q2.count && !anchor) {
+        UIView *v = [q2 lastObject];
+        [q2 removeLastObject];
+        if ([v isKindOfClass:%c(UILabel)]) {
+            UILabel *l = (UILabel *)v;
+            NSString *t = l.text ?: @"";
+            if ([t isEqualToString:@"查看原内容"] || [t caseInsensitiveCompare:@"View original"] == NSOrderedSame) { anchor = l; break; }
+        }
+        for (UIView *sv in v.subviews) { [q2 addObject:sv]; }
     }
+    CGFloat x = 40;
+    CGFloat y;
+    if (anchor && pv) {
+        CGRect af = anchor.frame;
+        CGRect pf = pv.frame;
+        x = af.origin.x;
+        CGFloat belowText = CGRectGetMaxY(af) + 2;
+        CGFloat aboveProgress = pf.origin.y - label.bounds.size.height - 2;
+        y = MIN(MAX(belowText, 0), aboveProgress);
+    } else if (pv) {
+        CGRect pf = pv.frame;
+        x = pf.origin.x;
+        y = pf.origin.y - label.bounds.size.height - 2;
+    } else if (anchor) {
+        CGRect af = anchor.frame;
+        x = af.origin.x;
+        y = CGRectGetMaxY(af) + 2;
+    } else {
+        y = 22;
+    }
+    label.frame = CGRectMake(x, y, label.bounds.size.width, label.bounds.size.height);
     [self addSubview:label];
 }
 %new - (void)downloadHDVideo:(AWEAwemeBaseViewController *)rootVC {
