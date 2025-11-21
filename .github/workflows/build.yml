@@ -1,91 +1,25 @@
-name: 构建 BHTikTok++
+TARGET := iphone:clang:16.5
+INSTALL_TARGET_PROCESSES = TikTok
+THEOS_DEVICE_IP = 192.168.100.246
+THEOS_DEVICE_USER = root
+include $(THEOS)/makefiles/common.mk
 
-on:
-  push:
-    branches: [ main ]
-    tags:
-      - 'v*'
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch:
+TWEAK_NAME = BHTikTok
 
-jobs:
-  build:
-    runs-on: macos-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+BHTikTok_FILES = \
+  Tweak.x \
+  BHDownload.m \
+  BHMultipleDownload.m \
+  BHIManager.m \
+  SecurityViewController.m \
+  $(wildcard JGProgressHUD/*.m) \
+  Settings/CountryTable.m \
+  Settings/LiveActions.m \
+  Settings/PlaybackSpeed.m \
+  Settings/ViewController.m
+BHTikTok_FRAMEWORKS = UIKit Foundation CoreGraphics Photos CoreServices SystemConfiguration SafariServices Security QuartzCore
+BHTikTok_CFLAGS = -fobjc-arc -Wno-unused-variable -Wno-unused-value -Wno-deprecated-declarations -Wno-nullability-completeness -Wno-unused-function -Wno-incompatible-pointer-types -I$(CURDIR)/Settings
+BHTikTok_RESOURCE_DIRS = Resources
+BHTikTok_INSTALL_PATH = /Library/Application Support/BHTikTok
 
-      - name: Install build dependencies
-        run: |
-          brew update
-          brew install ldid dpkg gnu-sed make
-          echo "PATH=$(brew --prefix make)/libexec/gnubin:$PATH" >> $GITHUB_ENV
-
-      - name: Set up Theos
-        run: |
-          THEOS="$HOME/theos"
-          if [ ! -d "$THEOS/.git" ]; then
-            git clone --recursive https://github.com/theos/theos.git "$THEOS"
-          else
-            git -C "$THEOS" submodule update --init --recursive || true
-          fi
-          if [ -d "$THEOS/sdks/.git" ]; then
-            git -C "$THEOS/sdks" pull --ff-only
-          else
-            rm -rf "$THEOS/sdks"
-            git clone https://github.com/theos/sdks.git "$THEOS/sdks"
-          fi
-
-      - name: Export THEOS env
-        run: echo "THEOS=$HOME/theos" >> $GITHUB_ENV
-
-      - name: Sync region and locale resources
-        run: |
-          set -euo pipefail
-          PROJECT_DIR=$(dirname $(find . -maxdepth 2 -name Makefile -print | head -n1))
-          RES_DIR="$PROJECT_DIR/Resources"
-          mkdir -p "$RES_DIR"
-          if [ -d "_地区" ]; then
-            mkdir -p "$RES_DIR/_地区"
-            rsync -a --delete "_地区/" "$RES_DIR/_地区/"
-          fi
-          if [ -d "dist/_locales" ]; then
-            mkdir -p "$RES_DIR/_locales"
-            rsync -a --delete "dist/_locales/" "$RES_DIR/_locales/"
-          fi
-
-      - name: Fetch ISO 3166-2 dataset
-        run: |
-          set -euo pipefail
-          PROJECT_DIR=$(dirname $(find . -maxdepth 2 -name Makefile -print | head -n1))
-          mkdir -p "$PROJECT_DIR/Resources/_地区"
-          curl -L --fail https://raw.githubusercontent.com/olahol/iso-3166-2.json/master/iso-3166-2.json -o "$PROJECT_DIR/Resources/_地区/iso-3166-2.json"
-
-      - name: List resources
-        run: |
-          set -euo pipefail
-          PROJECT_DIR=$(dirname $(find . -maxdepth 2 -name Makefile -print | head -n1))
-          echo "Resources tree:" && find "$PROJECT_DIR/Resources" -maxdepth 3 -type f -print || true
-
-      - name: Build package
-        run: |
-          PROJECT_DIR=$(dirname $(find . -maxdepth 2 -name Makefile -print | head -n1))
-          cd "$PROJECT_DIR" && make package
-
-      - name: Verify resources inside package
-        run: |
-          set -euo pipefail
-          PROJECT_DIR=$(dirname $(find . -maxdepth 2 -name Makefile -print | head -n1))
-          PKG=$(ls "$PROJECT_DIR"/packages/*.deb | head -n1)
-          dpkg-deb -c "$PKG" | tee pkg_contents.txt
-          if ! grep -E "Library/Application Support/BHTikTok/|zh-Hans\.lproj/Localizable\.strings|/_地区/iso-3166-2\.json|/_地区/|/_locales/" pkg_contents.txt > /dev/null; then
-            echo "Missing language/region resources in package"
-            exit 1
-          fi
-
-      - name: Upload .deb artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: bhtiktok-deb
-          path: '**/packages/*.deb'
+include $(THEOS_MAKE_PATH)/tweak.mk
