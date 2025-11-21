@@ -1,5 +1,11 @@
 #import "TikTokHeaders.h"
 
+@class AWEFeedViewTemplateCell;
+@interface AWEFeedViewTemplateCell (BHTikTokExtras)
+- (void)addOrUpdateRegionDateLabel;
+- (NSString *)bh_formatDateTime:(NSTimeInterval)timestamp;
+@end
+
 NSArray *jailbreakPaths;
 
 static void showAlert(NSString *title, NSString *message, NSString *okTitle, NSString *cancelTitle, void (^okHandler)(void)) {
