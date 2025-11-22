@@ -98,10 +98,10 @@
             return 1; // language section
         default:
             return 0; // Fallback for unexpected section
-    } else if (indexPath.section == 8) {
+    case 8:
         return [self createSwitchCellWithTitle:@"Language 🌎" Detail:@"Switch App Language" Key:@"app_language"];
-    }
-}
+    default:
+        return [UITableViewCell new];}
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.section == 0) {
