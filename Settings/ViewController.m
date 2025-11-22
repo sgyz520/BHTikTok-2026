@@ -5,11 +5,10 @@
 //  Created by raul on 08/10/2024.
 //
 
-#import "Settings/ViewController.h"
+#import "ViewController.h"
 #import "CountryTable.h"
 #import "LiveActions.h"
 #import "PlaybackSpeed.h"
-#import "BHIManager.h"
 
 @interface ViewController ()
 @property (nonatomic, strong) UITableView *staticTable;
@@ -23,7 +22,7 @@
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor systemBackgroundColor];
     
-    self.title = [BHIManager L:@"TF-TikTok Settings"];
+    self.title = NSLocalizedString(@"BHTikTok++ Settings", nil);
     self.staticTable = [[UITableView alloc] initWithFrame:CGRectZero ];
     self.staticTable.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:self.staticTable];
@@ -53,22 +52,22 @@
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     switch (section) {
         case 0:
-            return [BHIManager L:@"Feed"];
+            return NSLocalizedString(@"Feed", nil);
         case 1:
-            return [BHIManager L:@"Profile"];
+            return NSLocalizedString(@"Profile", nil);
         case 2:
-            return [BHIManager L:@"Confirm Settings"];
+            return NSLocalizedString(@"Confirm Settings", nil);
         case 3:
-            return [BHIManager L:@"Other"];
+            return NSLocalizedString(@"Other", nil);
         case 4:
-            return [BHIManager L:@"Region"];
+            return NSLocalizedString(@"Region", nil);
             break;
         case 5:
-            return [BHIManager L:@"Live Button Function"];
+            return NSLocalizedString(@"Live Button Function", nil);
         case 6:
-            return [BHIManager L:@"Playback Speed"];
+            return NSLocalizedString(@"Playback Speed", nil);
         case 7:
-            return [BHIManager L:@"Developer"];
+            return NSLocalizedString(@"Developer", nil);
         default:
             break;
     }
@@ -220,13 +219,13 @@
                 UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
                 
                 UILabel *followerLabel = [[UILabel alloc] init];
-                followerLabel.text = [BHIManager L:@"Follower:"];
+                followerLabel.text = @"Follower:";
                 followerLabel.font = [UIFont systemFontOfSize:16];
                 followerLabel.translatesAutoresizingMaskIntoConstraints = NO;
                 [cell.contentView addSubview:followerLabel];
                 
                 UITextField *textField = [[UITextField alloc] init];
-                textField.placeholder = [BHIManager L:@"Enter follower count"];
+                textField.placeholder = @"Enter follower count";
                 textField.borderStyle = UITextBorderStyleRoundedRect;
                 textField.delegate = self;
                 textField.tag = 2;
@@ -256,13 +255,13 @@
                 UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
                 
                 UILabel *followingLabel = [[UILabel alloc] init];
-                followingLabel.text = [BHIManager L:@"Following:"];
+                followingLabel.text = @"Following:";
                 followingLabel.font = [UIFont systemFontOfSize:16];
                 followingLabel.translatesAutoresizingMaskIntoConstraints = NO;
                 [cell.contentView addSubview:followingLabel];
                 
                 UITextField *textField = [[UITextField alloc] init];
-                textField.placeholder = [BHIManager L:@"Enter following count"];
+                textField.placeholder = @"Enter following count";
                 textField.borderStyle = UITextBorderStyleRoundedRect;
                 textField.delegate = self;
                 textField.tag = 1;
@@ -325,7 +324,7 @@
             case 1: {
                 NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
                 UITableViewCell *regions = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
-                regions.textLabel.text = [BHIManager L:@"Regions"];
+                regions.textLabel.text = NSLocalizedString(@"Regions", nil);
                 NSDictionary *selectedRegion = [defaults dictionaryForKey:@"region"];
                 regions.detailTextLabel.text = [NSString stringWithFormat:@"%@", selectedRegion[@"area"]];
                 return regions;
@@ -342,9 +341,9 @@
             case 1: {
                 NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
                 UITableViewCell *liveAction = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
-                liveAction.textLabel.text = [BHIManager L:@"Actions"];
+                liveAction.textLabel.text = NSLocalizedString(@"Actions", nil);
                 NSString *selectedLiveAction = [defaults valueForKey:@"live_action"];
-                NSArray *liveFuncTitles = @[[BHIManager L:@"Default"], [BHIManager L:@"TF-TikTok Settings"], [BHIManager L:@"Playback Speed"]];
+                NSArray *liveFuncTitles = @[NSLocalizedString(@"Default", nil), NSLocalizedString(@"BHTikTok++ Settings", nil), NSLocalizedString(@"Playback Speed", nil)];
                 if (selectedLiveAction != nil) {
                     liveAction.detailTextLabel.text = [NSString stringWithFormat:@"%@", [liveFuncTitles objectAtIndex:[selectedLiveAction integerValue]]];
                 }
@@ -364,7 +363,7 @@
             }
             case 1: {
                 UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
-                cell.textLabel.text = [BHIManager L:@"Speeds"];
+                cell.textLabel.text = NSLocalizedString(@"Speeds", nil);
                 
                 NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
                 NSString *selectedSpeed = [defaults valueForKey:@"playback_speed"];
@@ -379,27 +378,27 @@
         switch (indexPath.row) {
             case 0: {
                 UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
-                cell.textLabel.text = [BHIManager L:@"Raul Saeed"];
+                cell.textLabel.text = @"Raul Saeed";
                 cell.textLabel.textColor = [UIColor systemBlueColor];
-                cell.detailTextLabel.text = [BHIManager L:@"Github Page"];
+                cell.detailTextLabel.text = @"Github Page";
                 cell.imageView.image = [UIImage systemImageNamed:@"link"];
                 cell.detailTextLabel.textColor = [UIColor systemGrayColor];
                 return cell;
             }
             case 1: {
                 UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
-                cell.textLabel.text = [BHIManager L:@"Raul Saeed"];
+                cell.textLabel.text = @"Raul Saeed";
                 cell.textLabel.textColor = [UIColor systemBlueColor];
-                cell.detailTextLabel.text = [BHIManager L:@"X Page"];
+                cell.detailTextLabel.text = @"X Page";
                 cell.imageView.image = [UIImage systemImageNamed:@"link"];
                 cell.detailTextLabel.textColor = [UIColor systemGrayColor];
                 return cell;
             }
             case 2: {
                 UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
-                cell.textLabel.text = [BHIManager L:@"Buy Me A Coffe"];
+                cell.textLabel.text = @"Buy Me A Coffe";
                 cell.textLabel.textColor = [UIColor systemBlueColor];
-                cell.detailTextLabel.text = [BHIManager L:@"To keep me Motivated and the Tweak Updated."];
+                cell.detailTextLabel.text = @"To keep me Motivated and the Tweak Updated.";
                 cell.imageView.tintColor = [UIColor orangeColor];
                 cell.detailTextLabel.textColor = [UIColor systemGrayColor];
                 cell.imageView.image = [UIImage systemImageNamed:@"mug.fill"];
@@ -467,9 +466,9 @@
     
     
     
-    cell.textLabel.text = [BHIManager L:title];
+    cell.textLabel.text = NSLocalizedString(title, nil);
     cell.detailTextLabel.numberOfLines = 0;
-    cell.detailTextLabel.text = [BHIManager L:detail];
+    cell.detailTextLabel.text = NSLocalizedString(detail, nil);
     cell.detailTextLabel.textColor = [UIColor grayColor];
     return cell;
     

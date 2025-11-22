@@ -98,30 +98,6 @@
 + (NSDictionary *)selectedRegion {
     return [[NSUserDefaults standardUserDefaults] dictionaryForKey:@"region"];
 }
-static NSDictionary *bh_region_overrides;
-static NSDictionary *bh_load_overrides() {
-    if (!bh_region_overrides) {
-        NSArray<NSString *> *paths = @[
-            @"/Library/Application Support/BHTikTok/_地区/overrides.zh.json",
-            @"/var/jb/Library/Application Support/BHTikTok/_地区/overrides.zh.json"
-        ];
-        for (NSString *p in paths) {
-            NSData *d = [NSData dataWithContentsOfFile:p];
-            if (d) {
-                NSDictionary *j = [NSJSONSerialization JSONObjectWithData:d options:0 error:nil];
-                if ([j isKindOfClass:[NSDictionary class]]) { bh_region_overrides = j; break; }
-            }
-        }
-        if (!bh_region_overrides) bh_region_overrides = @{};
-    }
-    return bh_region_overrides;
-}
-+ (NSString *)localizedSubdivisionNameForCountryCode:(NSString *)cc code:(NSString *)subCode default:(NSString *)fallback {
-    NSDictionary *ov = bh_load_overrides();
-    NSDictionary *country = ov[cc ?: @""];
-    NSString *zh = country[subCode ?: @""];
-    return zh ?: fallback ?: @"";
-}
 + (BOOL)fakeChangesEnabled {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"en_fake"];
 }
@@ -234,31 +210,5 @@ static NSDictionary *bh_load_overrides() {
     [numberFormatter setNumberStyle:NSNumberFormatterPercentStyle];
     NSNumber *number = [NSNumber numberWithFloat:per];
     return [numberFormatter stringFromNumber:number];
-}
-
-static NSDictionary *bh_cn_strings;
-static NSString *bh_cn_lookup(NSString *key) {
-    if (!bh_cn_strings) {
-        NSArray<NSString *> *paths = @[
-            @"/Library/Application Support/BHTikTok/zh-Hans.lproj/Localizable.strings",
-            @"/Library/Application Support/BHTikTok/Resources/zh-Hans.lproj/Localizable.strings",
-            @"/Library/Application Support/TF-TikTok/zh-Hans.lproj/Localizable.strings",
-            @"/Library/Application Support/TF-TikTok/Resources/zh-Hans.lproj/Localizable.strings",
-            @"/var/jb/Library/Application Support/BHTikTok/zh-Hans.lproj/Localizable.strings",
-            @"/var/jb/Library/Application Support/BHTikTok/Resources/zh-Hans.lproj/Localizable.strings",
-            @"/var/jb/Library/Application Support/TF-TikTok/zh-Hans.lproj/Localizable.strings",
-            @"/var/jb/Library/Application Support/TF-TikTok/Resources/zh-Hans.lproj/Localizable.strings"
-        ];
-        for (NSString *p in paths) {
-            NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:p];
-            if (dict) { bh_cn_strings = dict; break; }
-        }
-    }
-    NSString *v = bh_cn_strings[key];
-    return v ?: key;
-}
-
-+ (NSString *)L:(NSString *)key {
-    return bh_cn_lookup(key);
 }
 @end

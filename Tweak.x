@@ -1,11 +1,5 @@
 #import "TikTokHeaders.h"
 
-@class AWEFeedViewTemplateCell;
-@interface AWEFeedViewTemplateCell (BHTikTokExtras)
-- (void)addOrUpdateRegionDateLabel;
-- (NSString *)bh_formatDateTime:(NSTimeInterval)timestamp;
-@end
-
 NSArray *jailbreakPaths;
 
 static void showAlert(NSString *title, NSString *message, NSString *okTitle, NSString *cancelTitle, void (^okHandler)(void)) {
@@ -21,7 +15,7 @@ static void showAlert(NSString *title, NSString *message, NSString *okTitle, NSS
 }
 
 static void showConfirmation(void (^okHandler)(void)) {
-  showAlert([BHIManager L:@"BHTikTok, Hi"], [BHIManager L:@"Are you sure?"], [BHIManager L:@"Yes"], [BHIManager L:@"No"], okHandler);
+  showAlert(NSLocalizedString(@"BHTikTok, Hi", nil), NSLocalizedString(@"Are you sure?", nil), NSLocalizedString(@"Yes", nil), NSLocalizedString(@"No", nil), okHandler);
 }
 
 static NSString *flagEmojiForCountryCode(NSString *code) {
@@ -210,7 +204,7 @@ static BOOL isAuthenticationShowed = FALSE;
         NSNumber *userVideoCount = [user visibleVideosCount];
         if (userVideoCount){
             UILabel *userVideoCountLabel = [[UILabel alloc] initWithFrame:CGRectMake(0,2,100,20.5)];
-            userVideoCountLabel.text = [NSString stringWithFormat:@"%@: %@", [BHIManager L:@"Video Count:"], userVideoCount];
+            userVideoCountLabel.text = [NSString stringWithFormat:@"Video Count: %@", userVideoCount];
             userVideoCountLabel.font = [UIFont systemFontOfSize:9.0];
             [self addSubview:userVideoCountLabel];
         }
@@ -232,7 +226,7 @@ static BOOL isAuthenticationShowed = FALSE;
 }
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
     if (sender.state == UIGestureRecognizerStateBegan) {
-        showAlert([BHIManager L:@"Save profile image"], [BHIManager L:@"Do you want to save this image"], [BHIManager L:@"Yes"], [BHIManager L:@"No"], ^{
+        showAlert(NSLocalizedString(@"Save profile image", nil), NSLocalizedString(@"Do you want to save this image", nil), NSLocalizedString(@"Yes", nil), NSLocalizedString(@"No", nil), ^{
             UIImageWriteToSavedPhotosAlbum([self bd_baseImage], self, @selector(image:didFinishSavingWithError:contextInfo:), nil);
         });
     }
@@ -270,7 +264,7 @@ static BOOL isAuthenticationShowed = FALSE;
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
     if (sender.state == UIGestureRecognizerStateBegan) {
         NSString *profileDescription = [self text];
-        showAlert([BHIManager L:@"Copy bio"], [BHIManager L:@"Do you want to copy this text to clipboard"], [BHIManager L:@"Yes"], [BHIManager L:@"No"], ^{
+        showAlert(NSLocalizedString(@"Copy bio", nil), NSLocalizedString(@"Do you want to copy this text to clipboard", nil), NSLocalizedString(@"Yes", nil), NSLocalizedString(@"No", nil), ^{
              if (profileDescription) {
                 UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
                 pasteboard.string = profileDescription;
@@ -313,8 +307,8 @@ static BOOL isAuthenticationShowed = FALSE;
         TTKSettingsBaseCellPlugin *BHTikTokSettingsPluginCell = [[CellClass alloc] initWithPluginContext:self.context];
 
         AWESettingItemModel *BHTikTokSettingsItemModel = [[ItemClass alloc] initWithIdentifier:@"bhtiktok_settings"];
-        [BHTikTokSettingsItemModel setTitle:[BHIManager L:@"TF-TikTok Settings"]];
-        [BHTikTokSettingsItemModel setDetail:[BHIManager L:@"TF-TikTok Settings"]];
+        [BHTikTokSettingsItemModel setTitle:NSLocalizedString(@"BHTikTok++ settings", nil)];
+        [BHTikTokSettingsItemModel setDetail:NSLocalizedString(@"BHTikTok++ settings", nil)];
         [BHTikTokSettingsItemModel setIconImage:[UIImage systemImageNamed:@"gear"]];
         [BHTikTokSettingsItemModel setType:99];
 
@@ -777,7 +771,19 @@ static BOOL isAuthenticationShowed = FALSE;
             AWEUserModel *authorModel = model.author;
             NSString *nickname = authorModel.nickname;
             NSString *username = authorModel.socialName;
-            %orig(username ?: arg1);
+            NSString *textOut = username;
+            if ([BHIManager uploadRegion]) {
+                NSString *regionCode = model.region;
+                if (!regionCode) {
+                    NSDictionary *selectedRegion = [BHIManager selectedRegion];
+                    regionCode = selectedRegion[@"code"];
+                }
+                NSString *flag = flagEmojiForCountryCode(regionCode);
+                if (flag) {
+                    textOut = [NSString stringWithFormat:@"%@ %@", username ?: arg1, flag];
+                }
+            }
+            %orig(textOut);
         }else {
             %orig;
         }
@@ -1028,7 +1034,29 @@ static BOOL isAuthenticationShowed = FALSE;
 %hook AWEPlayInteractionAuthorView
 - (void)layoutSubviews {
     %orig;
-    [[self viewWithTag:666] removeFromSuperview];
+    if ([BHIManager uploadRegion]){
+        for (int i = 0; i < [[self subviews] count]; i ++){
+            id j = [[self subviews] objectAtIndex:i];
+            if ([j isKindOfClass:%c(UIStackView)]){
+                CGRect frame = [j frame];
+                frame.origin.x = 39.5; 
+                [j setFrame:frame];
+            }else {
+                [[self viewWithTag:666] removeFromSuperview];
+            }
+        }
+        [[self viewWithTag:666] removeFromSuperview];
+        AWEFeedCellViewController* rootVC = self.yy_viewController;
+        AWEAwemeModel *model = rootVC.model;
+        NSString *countryID = model.region;
+        UILabel *uploadLabel = [[UILabel alloc]initWithFrame:CGRectMake(0,2,39.5,20.5)];
+        NSString *countryEmoji = flagEmojiForCountryCode(countryID);
+        uploadLabel.text = [NSString stringWithFormat:@"%@ •",countryEmoji];
+        uploadLabel.tag = 666;
+        [uploadLabel setTextColor: [UIColor whiteColor]];
+        [uploadLabel sizeToFit];
+        [self addSubview:uploadLabel];
+    }
 }
 %end
 %hook TIKTOKProfileHeaderView // copy profile information
@@ -1071,11 +1099,6 @@ static BOOL isAuthenticationShowed = FALSE;
     if ([BHIManager hideElementButton]) {
         [self addHideElementButton];
     }
-    if ([BHIManager uploadRegion]) {
-        [(id)self addOrUpdateRegionDateLabel];
-    } else {
-        [[self viewWithTag:668] removeFromSuperview];
-    }
 }
 - (void)configureWithModel:(id)model {
     %orig;
@@ -1085,11 +1108,6 @@ static BOOL isAuthenticationShowed = FALSE;
     }
     if ([BHIManager hideElementButton]) {
         [self addHideElementButton];
-    }
-    if ([BHIManager uploadRegion]) {
-        [(id)self addOrUpdateRegionDateLabel];
-    } else {
-        [[self viewWithTag:668] removeFromSuperview];
     }
 }
 %new - (void)addDownloadButton {
@@ -1110,77 +1128,6 @@ static BOOL isAuthenticationShowed = FALSE;
         ]];
     }
 }
-%new - (NSString *)bh_formatDateTime:(NSTimeInterval)timestamp {
-    NSDate *date = [NSDate dateWithTimeIntervalSince1970:timestamp];
-    NSDateFormatter *df = [[NSDateFormatter alloc] init];
-    df.dateFormat = @"yyyy-MM-dd HH:mm";
-    return [df stringFromDate:date];
-}
-%new - (void)addOrUpdateRegionDateLabel {
-    [[self viewWithTag:668] removeFromSuperview];
-    AWEAwemeBaseViewController *rootVC = self.viewController;
-    AWEAwemeModel *m = rootVC.model;
-    NSDictionary *sr = [BHIManager selectedRegion];
-    NSString *country = sr[@"name"] ?: m.region;
-    NSString *area = sr[@"area"] ?: @"";
-    NSString *loc = country ?: @"";
-    if (area.length > 0 && ![area isEqualToString:country]) { loc = [NSString stringWithFormat:@"%@  %@", country, area]; }
-    NSNumber *ct = m.createTime;
-    NSString *dt = [(id)self bh_formatDateTime:[ct doubleValue]];
-    NSString *text = [NSString stringWithFormat:@"%@  %@%@", dt, [BHIManager L:@"IP Location:"], loc];
-    UILabel *label = [[UILabel alloc] init];
-    label.tag = 668;
-    label.text = text;
-    label.textColor = [UIColor whiteColor];
-    label.font = [UIFont systemFontOfSize:12 weight:UIFontWeightRegular];
-    [label sizeToFit];
-    // Find progress bar
-    UIProgressView *pv = self.progressView;
-    if (!pv) {
-        NSMutableArray *q = [NSMutableArray arrayWithObject:self];
-        while (q.count && !pv) {
-            UIView *v = [q lastObject];
-            [q removeLastObject];
-            if ([v isKindOfClass:%c(UIProgressView)]) { pv = (UIProgressView *)v; break; }
-            for (UIView *sv in v.subviews) { [q addObject:sv]; }
-        }
-    }
-    // Find anchor label: "查看原内容" / "View original"
-    UILabel *anchor = nil;
-    NSMutableArray *q2 = [NSMutableArray arrayWithObject:self];
-    while (q2.count && !anchor) {
-        UIView *v = [q2 lastObject];
-        [q2 removeLastObject];
-        if ([v isKindOfClass:%c(UILabel)]) {
-            UILabel *l = (UILabel *)v;
-            NSString *t = l.text ?: @"";
-            if ([t isEqualToString:@"查看原内容"] || [t caseInsensitiveCompare:@"View original"] == NSOrderedSame) { anchor = l; break; }
-        }
-        for (UIView *sv in v.subviews) { [q2 addObject:sv]; }
-    }
-    CGFloat x = 40;
-    CGFloat y;
-    if (anchor && pv) {
-        CGRect af = anchor.frame;
-        CGRect pf = pv.frame;
-        x = af.origin.x;
-        CGFloat belowText = CGRectGetMaxY(af) + 2;
-        CGFloat aboveProgress = pf.origin.y - label.bounds.size.height - 2;
-        y = MIN(MAX(belowText, 0), aboveProgress);
-    } else if (pv) {
-        CGRect pf = pv.frame;
-        x = pf.origin.x;
-        y = pf.origin.y - label.bounds.size.height - 2;
-    } else if (anchor) {
-        CGRect af = anchor.frame;
-        x = af.origin.x;
-        y = CGRectGetMaxY(af) + 2;
-    } else {
-        y = 22;
-    }
-    label.frame = CGRectMake(x, y, label.bounds.size.width, label.bounds.size.height);
-    [self addSubview:label];
-}
 %new - (void)downloadHDVideo:(AWEAwemeBaseViewController *)rootVC {
     NSString *as = rootVC.model.itemID;
     NSURL *downloadableURL = [NSURL URLWithString:[NSString stringWithFormat:@"https://tikwm.com/video/media/hdplay/%@.mp4", as]];
@@ -1190,7 +1137,7 @@ static BOOL isAuthenticationShowed = FALSE;
         [dwManager downloadFileWithURL:downloadableURL];
         [dwManager setDelegate:self];
         self.hud = [JGProgressHUD progressHUDWithStyle:JGProgressHUDStyleDark];
-        self.hud.textLabel.text = [BHIManager L:@"Downloading"];
+        self.hud.textLabel.text = @"Downloading";
         [self.hud showInView:topMostController().view];
     }
 }
@@ -1203,7 +1150,7 @@ static BOOL isAuthenticationShowed = FALSE;
         [dwManager downloadFileWithURL:downloadableURL];
         [dwManager setDelegate:self];
         self.hud = [JGProgressHUD progressHUDWithStyle:JGProgressHUDStyleDark];
-        self.hud.textLabel.text = [BHIManager L:@"Downloading"];
+        self.hud.textLabel.text = @"Downloading";
         [self.hud showInView:topMostController().view];
     }
 }
@@ -1219,7 +1166,7 @@ static BOOL isAuthenticationShowed = FALSE;
                     [dwManager downloadFileWithURL:downloadableURL];
                     [dwManager setDelegate:self];
                     self.hud = [JGProgressHUD progressHUDWithStyle:JGProgressHUDStyleDark];
-                    self.hud.textLabel.text = [BHIManager L:@"Downloading"];
+                    self.hud.textLabel.text = @"Downloading";
                      [self.hud showInView:topMostController().view];
                 }
             
@@ -1244,7 +1191,7 @@ static BOOL isAuthenticationShowed = FALSE;
             [dwManager setDelegate:self];
             [dwManager downloadFiles:fileURLs];
             self.hud = [JGProgressHUD progressHUDWithStyle:JGProgressHUDStyleDark];
-            self.hud.textLabel.text = [BHIManager L:@"Downloading"];
+            self.hud.textLabel.text = @"Downloading";
             [self.hud showInView:topMostController().view];
 
 }
@@ -1257,7 +1204,7 @@ static BOOL isAuthenticationShowed = FALSE;
         [dwManager downloadFileWithURL:downloadableURL];
         [dwManager setDelegate:self];
         self.hud = [JGProgressHUD progressHUDWithStyle:JGProgressHUDStyleDark];
-        self.hud.textLabel.text = [BHIManager L:@"Downloading"];
+        self.hud.textLabel.text = @"Downloading";
         [self.hud showInView:topMostController().view];
     }
 }
@@ -1267,7 +1214,7 @@ static BOOL isAuthenticationShowed = FALSE;
         UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
         pasteboard.string = [downloadableURL absoluteString];
     } else {
-        showAlert([BHIManager L:@"BHTikTok, Hi"], [BHIManager L:@"Could Not Copy Music"], [BHIManager L:@"OK"], [BHIManager L:@"Cancel"], ^{});
+        showAlert(@"BHTikTok, Hi", @"Could Not Copy Music.", @"OK", @"Cancel", ^{});
     }
 }
 %new - (void)copyVideo:(AWEAwemeBaseViewController *)rootVC {
@@ -1276,7 +1223,7 @@ static BOOL isAuthenticationShowed = FALSE;
         UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
         pasteboard.string = [downloadableURL absoluteString];
     } else {
-        showAlert([BHIManager L:@"BHTikTok, Hi"], [BHIManager L:@"the video doesn't have music to download"], [BHIManager L:@"OK"], [BHIManager L:@"Cancel"], ^{});
+        showAlert(@"BHTikTok, Hi", @"The video dosen't have music to download.", @"OK", @"Cancel", ^{});
     }
 }
 %new - (void)copyDecription:(AWEAwemeBaseViewController *)rootVC {
@@ -1285,20 +1232,20 @@ static BOOL isAuthenticationShowed = FALSE;
         UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
         pasteboard.string = video_description;
     } else {
-        showAlert([BHIManager L:@"BHTikTok, Hi"], [BHIManager L:@"the video doesn't have music to download"], [BHIManager L:@"OK"], [BHIManager L:@"Cancel"], ^{});
+        showAlert(@"BHTikTok, Hi", @"The video dosen't have music to download.", @"OK", @"Cancel", ^{});
     }
 }
 %new - (void) downloadButtonHandler:(UIButton *)sender {
     AWEAwemeBaseViewController *rootVC = self.viewController;
     if ([rootVC isKindOfClass:%c(AWEFeedCellViewController)]) {
 
-         UIAction *action1 = [UIAction actionWithTitle:[BHIManager L:@"Download Video"]
+         UIAction *action1 = [UIAction actionWithTitle:@"Download Video"
                                             image:[UIImage systemImageNamed:@"film"]
                                        identifier:nil
                                           handler:^(__kindof UIAction * _Nonnull action) {
                                             [self downloadVideo:rootVC];
     }];
-        UIAction *action0 = [UIAction actionWithTitle:[BHIManager L:@"Download HD Video"]
+        UIAction *action0 = [UIAction actionWithTitle:@"Download HD Video"
                                             image:[UIImage systemImageNamed:@"film"]
                                        identifier:nil
                                           handler:^(__kindof UIAction * _Nonnull action) {
@@ -1338,7 +1285,7 @@ static BOOL isAuthenticationShowed = FALSE;
         unsigned long photosCount = [photos count];
         NSMutableArray <UIAction *> *photosActions = [NSMutableArray array];
             for (int i = 0; i < photosCount; i++) {
-        NSString *title = [NSString stringWithFormat:@"%@ %d", [BHIManager L:@"Download Photo"], i+1];
+        NSString *title = [NSString stringWithFormat:@"Download Photo %d", i+1];
         UIAction *action = [UIAction actionWithTitle:title
                                                image:[UIImage systemImageNamed:@"photo.fill"]
                                           identifier:nil
@@ -1348,32 +1295,32 @@ static BOOL isAuthenticationShowed = FALSE;
         [photosActions addObject:action];
 
     }
-    UIAction *allPhotosAction = [UIAction actionWithTitle:[BHIManager L:@"Download All Photos"]
+    UIAction *allPhotosAction = [UIAction actionWithTitle:@"Download All Photos"
                                             image:[UIImage systemImageNamed:@"photo.fill"]
                                        identifier:nil
                                           handler:^(__kindof UIAction * _Nonnull action) {
                                             [self downloadPhotos:rootVC];
     }];
     [photosActions addObject:allPhotosAction];
-    UIAction *action2 = [UIAction actionWithTitle:[BHIManager L:@"Download Music"]
+    UIAction *action2 = [UIAction actionWithTitle:@"Download Music"
                                             image:[UIImage systemImageNamed:@"music.note"]
                                        identifier:nil
                                           handler:^(__kindof UIAction * _Nonnull action) {
                                             [self downloadMusic:rootVC];
     }];
-    UIAction *action3 = [UIAction actionWithTitle:[BHIManager L:@"Copy Music link"]
+    UIAction *action3 = [UIAction actionWithTitle:@"Copy Music link"
                                             image:[UIImage systemImageNamed:@"link"]
                                        identifier:nil
                                           handler:^(__kindof UIAction * _Nonnull action) {
                                             [self copyMusic:rootVC];
     }];
-    UIAction *action4 = [UIAction actionWithTitle:[BHIManager L:@"Copy Video link"]
+    UIAction *action4 = [UIAction actionWithTitle:@"Copy Video link"
                                             image:[UIImage systemImageNamed:@"link"]
                                        identifier:nil
                                           handler:^(__kindof UIAction * _Nonnull action) {
                                             [self copyVideo:rootVC];
     }];
-    UIAction *action5 = [UIAction actionWithTitle:[BHIManager L:@"Copy Decription"]
+    UIAction *action5 = [UIAction actionWithTitle:@"Copy Decription"
                                             image:[UIImage systemImageNamed:@"note.text"]
                                        identifier:nil
                                           handler:^(__kindof UIAction * _Nonnull action) {
@@ -1389,7 +1336,7 @@ static BOOL isAuthenticationShowed = FALSE;
         unsigned long photosCount = [photos count];
         NSMutableArray <UIAction *> *photosActions = [NSMutableArray array];
             for (int i = 0; i < photosCount; i++) {
-        NSString *title = [NSString stringWithFormat:@"%@ %d", [BHIManager L:@"Download Photo"], i+1];
+        NSString *title = [NSString stringWithFormat:@"Download Photo %d", i+1];
         UIAction *action = [UIAction actionWithTitle:title
                                                image:[UIImage systemImageNamed:@"photo.fill"]
                                           identifier:nil
@@ -1399,32 +1346,32 @@ static BOOL isAuthenticationShowed = FALSE;
         [photosActions addObject:action];
 
     }
-        UIAction *allPhotosAction = [UIAction actionWithTitle:[BHIManager L:@"Download All Photos"]
+        UIAction *allPhotosAction = [UIAction actionWithTitle:@"Download Photos"
                                             image:[UIImage systemImageNamed:@"photo.fill"]
                                        identifier:nil
                                           handler:^(__kindof UIAction * _Nonnull action) {
                                             [self downloadPhotos:rootVC];
     }];
     [photosActions addObject:allPhotosAction];
-    UIAction *action2 = [UIAction actionWithTitle:[BHIManager L:@"Download Music"]
+    UIAction *action2 = [UIAction actionWithTitle:@"Download Music"
                                             image:[UIImage systemImageNamed:@"music.note"]
                                        identifier:nil
                                           handler:^(__kindof UIAction * _Nonnull action) {
                                             [self downloadMusic:rootVC];
     }];
-    UIAction *action3 = [UIAction actionWithTitle:[BHIManager L:@"Copy Music link"]
+    UIAction *action3 = [UIAction actionWithTitle:@"Copy Music link"
                                             image:[UIImage systemImageNamed:@"link"]
                                        identifier:nil
                                           handler:^(__kindof UIAction * _Nonnull action) {
                                             [self copyMusic:rootVC];
     }];
-    UIAction *action4 = [UIAction actionWithTitle:[BHIManager L:@"Copy Video link"]
+    UIAction *action4 = [UIAction actionWithTitle:@"Copy Video link"
                                             image:[UIImage systemImageNamed:@"link"]
                                        identifier:nil
                                           handler:^(__kindof UIAction * _Nonnull action) {
                                             [self copyVideo:rootVC];
     }];
-    UIAction *action5 = [UIAction actionWithTitle:[BHIManager L:@"Copy Decription"]
+    UIAction *action5 = [UIAction actionWithTitle:@"Copy Decription"
                                             image:[UIImage systemImageNamed:@"note.text"]
                                        identifier:nil
                                           handler:^(__kindof UIAction * _Nonnull action) {
@@ -1498,7 +1445,7 @@ static BOOL isAuthenticationShowed = FALSE;
     self.progressView.progress = progress;
     self.hud.detailTextLabel.text = [BHIManager getDownloadingPersent:progress];
     self.hud.tapOutsideBlock = ^(JGProgressHUD * _Nonnull HUD) {
-        self.hud.textLabel.text = [BHIManager L:@"Backgrounding ✌️"];
+        self.hud.textLabel.text = @"Backgrounding ✌️";
         [self.hud dismissAfterDelay:0.4];
     };
 }
@@ -1575,7 +1522,7 @@ static BOOL isAuthenticationShowed = FALSE;
         [dwManager downloadFileWithURL:downloadableURL];
         [dwManager setDelegate:self];
         self.hud = [JGProgressHUD progressHUDWithStyle:JGProgressHUDStyleDark];
-        self.hud.textLabel.text = [BHIManager L:@"Downloading"];
+        self.hud.textLabel.text = @"Downloading";
         [self.hud showInView:topMostController().view];
     }
 }
@@ -1588,7 +1535,7 @@ static BOOL isAuthenticationShowed = FALSE;
         [dwManager downloadFileWithURL:downloadableURL];
         [dwManager setDelegate:self];
         self.hud = [JGProgressHUD progressHUDWithStyle:JGProgressHUDStyleDark];
-        self.hud.textLabel.text = [BHIManager L:@"Downloading"];
+        self.hud.textLabel.text = @"Downloading";
         [self.hud showInView:topMostController().view];
     }
 }
@@ -1601,7 +1548,7 @@ static BOOL isAuthenticationShowed = FALSE;
         [dwManager downloadFileWithURL:downloadableURL];
         [dwManager setDelegate:self];
         self.hud = [JGProgressHUD progressHUDWithStyle:JGProgressHUDStyleDark];
-        self.hud.textLabel.text = [BHIManager L:@"Downloading"];
+        self.hud.textLabel.text = @"Downloading";
         [self.hud showInView:topMostController().view];
     }
 }
@@ -1611,7 +1558,7 @@ static BOOL isAuthenticationShowed = FALSE;
         UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
         pasteboard.string = [downloadableURL absoluteString];
     } else {
-        [%c(AWEUIAlertView) showAlertWithTitle:[BHIManager L:@"BHTikTok, Hi"] description:[BHIManager L:@"the video doesn't have music to download"] image:nil actionButtonTitle:[BHIManager L:@"OK"] cancelButtonTitle:nil actionBlock:nil cancelBlock:nil];
+        [%c(AWEUIAlertView) showAlertWithTitle:@"BHTikTok, Hi" description:@"The video dosen't have music to download." image:nil actionButtonTitle:@"OK" cancelButtonTitle:nil actionBlock:nil cancelBlock:nil];
     }
 }
 %new - (void)copyVideo:(AWEAwemeBaseViewController *)rootVC {
@@ -1620,7 +1567,7 @@ static BOOL isAuthenticationShowed = FALSE;
         UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
         pasteboard.string = [downloadableURL absoluteString];
     } else {
-        showAlert([BHIManager L:@"BHTikTok, Hi"], [BHIManager L:@"the video doesn't have music to download"], [BHIManager L:@"OK"], [BHIManager L:@"Cancel"], ^{});
+        showAlert(@"BHTikTok, Hi", @"The video dosen't have music to download.", @"OK", @"Cancel", ^{});
     }
 }
 %new - (void)copyDecription:(AWEAwemeBaseViewController *)rootVC {
@@ -1629,44 +1576,44 @@ static BOOL isAuthenticationShowed = FALSE;
         UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
         pasteboard.string = video_description;
     } else {
-        showAlert([BHIManager L:@"BHTikTok, Hi"], [BHIManager L:@"the video doesn't have music to download"], [BHIManager L:@"OK"], [BHIManager L:@"Cancel"], ^{});
+        showAlert(@"BHTikTok, Hi", @"The video dosen't have music to download.", @"OK", @"Cancel", ^{});
     }
 }
 %new - (void) downloadButtonHandler:(UIButton *)sender {
     AWEAwemeBaseViewController *rootVC = self.viewController;
     if ([rootVC.interactionController isKindOfClass:%c(TTKFeedInteractionLegacyMainContainerElement)]) {
 
-     UIAction *action1 = [UIAction actionWithTitle:[BHIManager L:@"Download Video"]
+     UIAction *action1 = [UIAction actionWithTitle:@"Download Video"
                                             image:[UIImage systemImageNamed:@"film"]
                                        identifier:nil
                                           handler:^(__kindof UIAction * _Nonnull action) {
                                             [self downloadVideo:rootVC];
     }];
-    UIAction *action0 = [UIAction actionWithTitle:[BHIManager L:@"Download HD Video"]
+    UIAction *action0 = [UIAction actionWithTitle:@"Download HD Video"
                                             image:[UIImage systemImageNamed:@"film"]
                                        identifier:nil
                                           handler:^(__kindof UIAction * _Nonnull action) {
                                             [self downloadHDVideo:rootVC];
     }];
-    UIAction *action2 = [UIAction actionWithTitle:[BHIManager L:@"Download Music"]
+    UIAction *action2 = [UIAction actionWithTitle:@"Download Music"
                                             image:[UIImage systemImageNamed:@"music.note"]
                                        identifier:nil
                                           handler:^(__kindof UIAction * _Nonnull action) {
                                             [self downloadMusic:rootVC];
     }];
-    UIAction *action3 = [UIAction actionWithTitle:[BHIManager L:@"Copy Music link"]
+    UIAction *action3 = [UIAction actionWithTitle:@"Copy Music link"
                                             image:[UIImage systemImageNamed:@"link"]
                                        identifier:nil
                                           handler:^(__kindof UIAction * _Nonnull action) {
                                             [self copyMusic:rootVC];
     }];
-    UIAction *action4 = [UIAction actionWithTitle:[BHIManager L:@"Copy Video link"]
-        image:[UIImage systemImageNamed:@"link"]
-       identifier:nil
-          handler:^(__kindof UIAction * _Nonnull action) {
-            [self copyVideo:rootVC];
+    UIAction *action4 = [UIAction actionWithTitle:@"Copy Video link"
+                                            image:[UIImage systemImageNamed:@"link"]
+                                       identifier:nil
+                                          handler:^(__kindof UIAction * _Nonnull action) {
+                                            [self copyVideo:rootVC];
     }];
-    UIAction *action5 = [UIAction actionWithTitle:[BHIManager L:@"Copy Decription"]
+    UIAction *action5 = [UIAction actionWithTitle:@"Copy Decription"
                                             image:[UIImage systemImageNamed:@"note.text"]
                                        identifier:nil
                                           handler:^(__kindof UIAction * _Nonnull action) {
@@ -1718,7 +1665,7 @@ static BOOL isAuthenticationShowed = FALSE;
 
 %new - (void)downloadProgress:(float)progress {
         self.hud.tapOutsideBlock = ^(JGProgressHUD * _Nonnull HUD) {
-        self.hud.textLabel.text = [BHIManager L:@"Backgrounding ✌️"];
+        self.hud.textLabel.text = @"Backgrounding ✌️";
         [self.hud dismissAfterDelay:0.4];
     };
     self.progressView.progress = progress;
