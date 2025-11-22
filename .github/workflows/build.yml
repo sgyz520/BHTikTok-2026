@@ -1,1 +1,50 @@
+name: 构建 BHTikTok++
 
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          brew update
+          brew install ldid dpkg gnu-sed
+
+      - name: Set up Theos
+        run: |
+          THEOS="$HOME/theos"
+          if [ ! -d "$THEOS/.git" ]; then
+            git clone --recursive https://github.com/theos/theos.git "$THEOS"
+          else
+            git -C "$THEOS" submodule update --init --recursive || true
+          fi
+          if [ -d "$THEOS/sdks/.git" ]; then
+            git -C "$THEOS/sdks" pull --ff-only
+          else
+            rm -rf "$THEOS/sdks"
+            git clone https://github.com/theos/sdks.git "$THEOS/sdks"
+          fi
+
+      - name: Export THEOS env
+        run: echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+
+      - name: Build package
+        run: |
+          make package
+
+      - name: Upload .deb artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bhtiktok-deb
+          path: packages/*.deb
