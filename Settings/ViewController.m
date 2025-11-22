@@ -101,7 +101,6 @@
     } else if (indexPath.section == 8) {
         return [self createSwitchCellWithTitle:@"Language 🌎" Detail:@"Switch App Language" Key:@"app_language"];
     }
-    }
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
