@@ -48,7 +48,11 @@
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"disable_live"];
 }
 + (BOOL)skipRecommendations {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"skip_recommnedations"];
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"skip_recommendations"];
+}
+
++ (NSString *)L:(NSString *)key {
+    return NSLocalizedString(key, nil);
 }
 + (BOOL)likeConfirmation {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"like_confirm"];
