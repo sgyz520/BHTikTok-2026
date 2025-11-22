@@ -46,7 +46,7 @@
 
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 8;
+    return 9;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
@@ -68,6 +68,8 @@
             return NSLocalizedString(@"Playback Speed", nil);
         case 7:
             return NSLocalizedString(@"Developer", nil);
+        case 8:
+            return NSLocalizedString(@"Language", nil);
         default:
             break;
     }
@@ -92,8 +94,13 @@
             return 2;
         case 7:
             return 3; // developer section
+        case 8:
+            return 1; // language section
         default:
             return 0; // Fallback for unexpected section
+    } else if (indexPath.section == 8) {
+        return [self createSwitchCellWithTitle:@"Language 🌎" Detail:@"Switch App Language" Key:@"app_language"];
+    }
     }
 }
 
@@ -481,6 +488,16 @@
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     [defaults setBool:sender.isOn forKey:key];
     [defaults synchronize];
+
+    if ([key isEqualToString:@"app_language"]) {
+        NSString *language = sender.isOn ? @"zh-Hans" : @"en";
+        [defaults setObject:language forKey:@"AppleLanguages"];
+        [defaults synchronize];
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Language Changed", nil) message:NSLocalizedString(@"Please restart the app to apply the changes.", nil) preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", nil) style:UIAlertActionStyleDefault handler:nil];
+        [alert addAction:okAction];
+        [self presentViewController:alert animated:YES completion:nil];
+    }
 }
 - (void)textFieldDidEndEditing:(UITextField *)textField {
     if (textField.tag == 1){
