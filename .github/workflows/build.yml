@@ -19,8 +19,7 @@ jobs:
       - name: Install build dependencies
         run: |
           brew update
-          brew install ldid dpkg gnu-sed make
-          echo "PATH=$(brew --prefix make)/libexec/gnubin:$PATH" >> $GITHUB_ENV
+          brew install ldid dpkg gnu-sed
 
       - name: Set up Theos
         run: |
@@ -40,52 +39,12 @@ jobs:
       - name: Export THEOS env
         run: echo "THEOS=$HOME/theos" >> $GITHUB_ENV
 
-      - name: Sync region and locale resources
-        run: |
-          set -euo pipefail
-          PROJECT_DIR=$(dirname $(find . -maxdepth 2 -name Makefile -print | head -n1))
-          RES_DIR="$PROJECT_DIR/Resources"
-          mkdir -p "$RES_DIR"
-          if [ -d "_地区" ]; then
-            mkdir -p "$RES_DIR/_地区"
-            rsync -a --delete "_地区/" "$RES_DIR/_地区/"
-          fi
-          if [ -d "dist/_locales" ]; then
-            mkdir -p "$RES_DIR/_locales"
-            rsync -a --delete "dist/_locales/" "$RES_DIR/_locales/"
-          fi
-
-      - name: Fetch ISO 3166-2 dataset
-        run: |
-          set -euo pipefail
-          PROJECT_DIR=$(dirname $(find . -maxdepth 2 -name Makefile -print | head -n1))
-          mkdir -p "$PROJECT_DIR/Resources/_地区"
-          curl -L --fail https://raw.githubusercontent.com/olahol/iso-3166-2.json/master/iso-3166-2.json -o "$PROJECT_DIR/Resources/_地区/iso-3166-2.json"
-
-      - name: List resources
-        run: |
-          set -euo pipefail
-          PROJECT_DIR=$(dirname $(find . -maxdepth 2 -name Makefile -print | head -n1))
-          echo "Resources tree:" && find "$PROJECT_DIR/Resources" -maxdepth 3 -type f -print || true
-
       - name: Build package
         run: |
-          PROJECT_DIR=$(dirname $(find . -maxdepth 2 -name Makefile -print | head -n1))
-          cd "$PROJECT_DIR" && make package
-
-      - name: Verify resources inside package
-        run: |
-          set -euo pipefail
-          PROJECT_DIR=$(dirname $(find . -maxdepth 2 -name Makefile -print | head -n1))
-          PKG=$(ls "$PROJECT_DIR"/packages/*.deb | head -n1)
-          dpkg-deb -c "$PKG" | tee pkg_contents.txt
-          if ! grep -E "Library/Application Support/BHTikTok/|zh-Hans\.lproj/Localizable\.strings|/_地区/iso-3166-2\.json|/_地区/|/_locales/" pkg_contents.txt > /dev/null; then
-            echo "Missing language/region resources in package"
-            exit 1
-          fi
+          make package
 
       - name: Upload .deb artifact
         uses: actions/upload-artifact@v4
         with:
           name: bhtiktok-deb
-          path: '**/packages/*.deb'
+          path: packages/*.deb
