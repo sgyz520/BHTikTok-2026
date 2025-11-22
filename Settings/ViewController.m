@@ -98,10 +98,8 @@
             return 1; // language section
         default:
             return 0; // Fallback for unexpected section
-    case 8:
-        return 1;
-    default:
-        return 0;}
+    }
+}
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.section == 0) {
@@ -411,6 +409,16 @@
                 return cell;
             }
                 break;
+            default:
+                break;
+        }
+    }
+    else if (indexPath.section == 8) {
+        switch (indexPath.row) {
+            case 0:
+                return [self createSwitchCellWithTitle:@"Chinese Language"
+                                                Detail:@"Change app language to Chinese"
+                                                   Key:@"app_language"];
             default:
                 break;
         }
