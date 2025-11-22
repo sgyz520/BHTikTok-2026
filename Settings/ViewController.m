@@ -99,9 +99,9 @@
         default:
             return 0; // Fallback for unexpected section
     case 8:
-        return [self createSwitchCellWithTitle:@"Language 🌎" Detail:@"Switch App Language" Key:@"app_language"];
+        return 1;
     default:
-        return [UITableViewCell new];}
+        return 0;}
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.section == 0) {
