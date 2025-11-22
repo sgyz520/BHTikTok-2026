@@ -77,3 +77,7 @@
 "FEATURE_CONFIRM_COMMENT_DISLIKE" = "评论点踩前进行确认";
 "FEATURE_CONFIRM_FOLLOW" = "关注前进行确认";
 "Enable Embedded Links" = "启用嵌入式链接";
+"Language Changed" = "语言已更改";
+"Please restart the app to apply the changes." = "请重启应用以应用更改。";
+"Chinese Language" = "中文语言";
+"Change app language to Chinese" = "将应用语言更改为中文";
