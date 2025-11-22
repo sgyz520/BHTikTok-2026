@@ -31,7 +31,17 @@ static NSString *flagEmojiForCountryCode(NSString *code) {
 
 %hook AppDelegate
 - (_Bool)application:(UIApplication *)application didFinishLaunchingWithOptions:(id)arg2 {
+    // Initialize language setting before calling orig
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *savedLanguage = [defaults objectForKey:@"BHTikTok_Language"];
+    if (savedLanguage) {
+        // Apply saved language preference
+        [[NSUserDefaults standardUserDefaults] setObject:@[savedLanguage] forKey:@"AppleLanguages"];
+        [[NSUserDefaults standardUserDefaults] synchronize];
+    }
+    
     %orig;
+    
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"flex_enebaled"]) {
         [[%c(FLEXManager) performSelector:@selector(sharedManager)] performSelector:@selector(showExplorer)];
     }

@@ -497,9 +497,12 @@
     [defaults synchronize];
 
     if ([key isEqualToString:@"app_language"]) {
+        // 保存语言设置到自定义键，而不是直接修改AppleLanguages
         NSString *language = sender.isOn ? @"zh-Hans" : @"en";
-        [defaults setObject:language forKey:@"AppleLanguages"];
+        [defaults setObject:language forKey:@"BHTikTok_Language"];
         [defaults synchronize];
+        
+        // 显示提示，告知用户需要重启应用
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Language Changed", nil) message:NSLocalizedString(@"Please restart the app to apply the changes.", nil) preferredStyle:UIAlertControllerStyleAlert];
         UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", nil) style:UIAlertActionStyleDefault handler:nil];
         [alert addAction:okAction];
