@@ -1,5 +1,5 @@
 TARGET := iphone:clang:latest
-INSTALL_TARGET_PROCESSES = TikTok
+INSTALL_TARGET_PROCESSES = TikTok Aweme
 THEOS_DEVICE_IP = 192.168.100.246
 THEOS_DEVICE_USER = root
 include $(THEOS)/makefiles/common.mk

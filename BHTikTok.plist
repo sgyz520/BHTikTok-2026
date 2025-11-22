@@ -1,4 +1,4 @@
-{ Filter = { Bundles = ( 
+{ Filter = { Bundles = (
     "com.zhiliaoapp.musically",
-    "com.ss.iphone.ugc.Ame",
-         ); }; }
+    "com.ss.iphone.ugc.Aweme"
+); }; }
