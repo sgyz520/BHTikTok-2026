@@ -30,15 +30,20 @@ static NSString *flagEmojiForCountryCode(NSString *code) {
   }
   
   int base = 127397;
-  unichar ua = (unichar)(a + base);
-  unichar ub = (unichar)(b + base);
+  int ua = (int)(a + base);
+  int ub = (int)(b + base);
   
   // 验证生成的Unicode字符是否在国旗emoji范围内
   if (ua < 0x1F1E6 || ua > 0x1F1FF || ub < 0x1F1E6 || ub > 0x1F1FF) {
     return @"🌍";
   }
   
-  NSString *flagEmoji = [[NSString alloc] initWithCharacters:(unichar[]){ua, ub} length:2];
+  // 转换回unichar
+  unichar flagChars[2];
+  flagChars[0] = (unichar)ua;
+  flagChars[1] = (unichar)ub;
+  
+  NSString *flagEmoji = [[NSString alloc] initWithCharacters:flagChars length:2];
   
   // 检查生成的emoji是否有效
   if (!flagEmoji || flagEmoji.length == 0) {

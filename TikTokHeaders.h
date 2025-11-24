@@ -11,6 +11,7 @@
 #import "Settings/PlaybackSpeed.h"
 
 @interface AppDelegate : NSObject <UIApplicationDelegate>
+- (void)applyLanguageSetting:(NSString *)language;
 @end
 
 @interface TTKCommentPanelViewController: UIViewController
