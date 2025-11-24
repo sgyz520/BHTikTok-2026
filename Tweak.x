@@ -1109,9 +1109,6 @@ static BOOL isAuthenticationShowed = FALSE;
     if ([BHIManager hideElementButton]) {
         [self addHideElementButton];
     }
-    if ([BHIManager videoUploadDate] || [BHIManager uploadRegion]) {
-        [self addVideoInfoLabels];
-    }
 }
 - (void)configureWithModel:(id)model {
     %orig;
@@ -1121,9 +1118,6 @@ static BOOL isAuthenticationShowed = FALSE;
     }
     if ([BHIManager hideElementButton]) {
         [self addHideElementButton];
-    }
-    if ([BHIManager videoUploadDate] || [BHIManager uploadRegion]) {
-        [self addVideoInfoLabels];
     }
 }
 %new - (void)addDownloadButton {
@@ -1484,156 +1478,6 @@ static BOOL isAuthenticationShowed = FALSE;
         [self.hud dismiss];
     }
 }
-%new - (void)addVideoInfoLabels {
-    // Remove existing labels if they exist
-    for (UIView *subview in self.contentView.subviews) {
-        if (subview.tag == 2001 || subview.tag == 2002 || subview.tag == 2003 || subview.tag == 2004) {
-            [subview removeFromSuperview];
-        }
-    }
-    
-    AWEAwemeBaseViewController *rootVC = self.viewController;
-    if (!rootVC || !rootVC.model) return;
-    
-    AWEAwemeModel *model = rootVC.model;
-    NSNumber *createTime = [model createTime];
-    NSString *region = [model region];
-    
-    CGFloat topOffset = 150; // Initial position below other elements
-    CGFloat leftOffset = 15;
-    CGFloat labelHeight = 20;
-    CGFloat iconSize = 16;
-    
-    // Add upload date label if enabled
-    if ([BHIManager videoUploadDate] && createTime) {
-        UIImageView *clockImage = [UIImageView new];
-        clockImage.image = [UIImage systemImageNamed:@"clock"];
-        clockImage.tintColor = [UIColor whiteColor];
-        clockImage.tag = 2001;
-        [clockImage setTranslatesAutoresizingMaskIntoConstraints:false];
-        [self.contentView addSubview:clockImage];
-        
-        UILabel *uploadDateLabel = [UILabel new];
-        uploadDateLabel.text = [self formattedDateStringFromTimestamp:[createTime doubleValue]];
-        uploadDateLabel.textColor = [UIColor whiteColor];
-        uploadDateLabel.font = [UIFont systemFontOfSize:14];
-        uploadDateLabel.tag = 2002;
-        [uploadDateLabel setTranslatesAutoresizingMaskIntoConstraints:false];
-        [self.contentView addSubview:uploadDateLabel];
-        
-        [NSLayoutConstraint activateConstraints:@[
-            [clockImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:topOffset],
-            [clockImage.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:leftOffset],
-            [clockImage.widthAnchor constraintEqualToConstant:iconSize],
-            [clockImage.heightAnchor constraintEqualToConstant:iconSize],
-        ]];
-        
-        [NSLayoutConstraint activateConstraints:@[
-            [uploadDateLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:topOffset],
-            [uploadDateLabel.leadingAnchor constraintEqualToAnchor:clockImage.trailingAnchor constant:5],
-            [uploadDateLabel.widthAnchor constraintEqualToConstant:200],
-            [uploadDateLabel.heightAnchor constraintEqualToConstant:labelHeight],
-        ]];
-        
-        topOffset += 25; // Adjust offset for next label
-    }
-    
-    // Add region label if enabled
-    if ([BHIManager uploadRegion] && region) {
-        UIImageView *globeImage = [UIImageView new];
-        globeImage.image = [UIImage systemImageNamed:@"globe"];
-        globeImage.tintColor = [UIColor whiteColor];
-        globeImage.tag = 2003;
-        [globeImage setTranslatesAutoresizingMaskIntoConstraints:false];
-        [self.contentView addSubview:globeImage];
-        
-        UILabel *regionLabel = [UILabel new];
-        NSString *countryCode = [self getCountryCodeFromRegion:region];
-        NSString *flagEmoji = flagEmojiForCountryCode(countryCode);
-        NSString *regionText = flagEmoji ? [NSString stringWithFormat:@"%@ %@", flagEmoji, region] : region;
-        regionLabel.text = regionText;
-        regionLabel.textColor = [UIColor whiteColor];
-        regionLabel.font = [UIFont systemFontOfSize:14];
-        regionLabel.tag = 2004;
-        [regionLabel setTranslatesAutoresizingMaskIntoConstraints:false];
-        [self.contentView addSubview:regionLabel];
-        
-        [NSLayoutConstraint activateConstraints:@[
-            [globeImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:topOffset],
-            [globeImage.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:leftOffset],
-            [globeImage.widthAnchor constraintEqualToConstant:iconSize],
-            [globeImage.heightAnchor constraintEqualToConstant:iconSize],
-        ]];
-        
-        [NSLayoutConstraint activateConstraints:@[
-            [regionLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:topOffset],
-            [regionLabel.leadingAnchor constraintEqualToAnchor:globeImage.trailingAnchor constant:5],
-            [regionLabel.widthAnchor constraintEqualToConstant:200],
-            [regionLabel.heightAnchor constraintEqualToConstant:labelHeight],
-        ]];
-    }
-}
-
-%new - (NSString *)formattedDateStringFromTimestamp:(NSTimeInterval)timestamp {
-    NSDate *date = [NSDate dateWithTimeIntervalSince1970:timestamp];
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    dateFormatter.dateFormat = @"yyyy-MM-dd";
-    return [dateFormatter stringFromDate:date];
-}
-
-%new - (NSString *)getCountryCodeFromRegion:(NSString *)region {
-    // This is a simplified mapping. In a real implementation, you might want
-    // to use a more comprehensive mapping or a library.
-    NSDictionary *regionToCountryCode = @{
-        @"United States": @"US",
-        @"China": @"CN",
-        @"United Kingdom": @"GB",
-        @"Japan": @"JP",
-        @"South Korea": @"KR",
-        @"Germany": @"DE",
-        @"France": @"FR",
-        @"Canada": @"CA",
-        @"Australia": @"AU",
-        @"India": @"IN",
-        @"Brazil": @"BR",
-        @"Russia": @"RU",
-        @"Mexico": @"MX",
-        @"Spain": @"ES",
-        @"Italy": @"IT",
-        @"Indonesia": @"ID",
-        @"Netherlands": @"NL",
-        @"Saudi Arabia": @"SA",
-        @"Turkey": @"TR",
-        @"Switzerland": @"CH",
-        @"Taiwan": @"TW",
-        @"Belgium": @"BE",
-        @"Ireland": @"IE",
-        @"Israel": @"IL",
-        @"Austria": @"AT",
-        @"Norway": @"NO",
-        @"United Arab Emirates": @"AE",
-        @"Nigeria": @"NG",
-        @"Egypt": @"EG",
-        @"South Africa": @"ZA",
-        @"Argentina": @"AR",
-        @"Thailand": @"TH",
-        @"Poland": @"PL",
-        @"Malaysia": @"MY",
-        @"Philippines": @"PH",
-        @"Ukraine": @"UA",
-        @"Bangladesh": @"BD",
-        @"Vietnam": @"VN",
-        @"Chile": @"CL",
-        @"Finland": @"FI",
-        @"Singapore": @"SG",
-        @"Denmark": @"DK",
-        @"Hong Kong": @"HK",
-        @"Sweden": @"SE",
-        @"New Zealand": @"NZ"
-    };
-    
-    return regionToCountryCode[region] ?: region;
-}
 %end
 
 %hook AWEAwemeDetailTableViewCell
@@ -1650,6 +1494,9 @@ static BOOL isAuthenticationShowed = FALSE;
     if ([BHIManager hideElementButton]) {
         [self addHideElementButton];
     }
+    if ([BHIManager videoUploadDate] || [BHIManager uploadRegion]) {
+        [self addVideoInfoLabels];
+    }
 }
 - (void)configureWithModel:(id)model {
     %orig;
@@ -1659,6 +1506,9 @@ static BOOL isAuthenticationShowed = FALSE;
     }
     if ([BHIManager hideElementButton]) {
         [self addHideElementButton];
+    }
+    if ([BHIManager videoUploadDate] || [BHIManager uploadRegion]) {
+        [self addVideoInfoLabels];
     }
 }
 %new - (void)addDownloadButton {
@@ -1855,6 +1705,238 @@ static BOOL isAuthenticationShowed = FALSE;
     if (error) {
         [self.hud dismiss];
     }
+}
+
+// 添加视频信息标签（上传日期和国家）
+%new - (void)addVideoInfoLabels {
+    // 移除已存在的标签，避免重复添加
+    UIView *existingDateLabel = [self viewWithTag:1001];
+    UIView *existingCountryLabel = [self viewWithTag:1002];
+    if (existingDateLabel) [existingDateLabel removeFromSuperview];
+    if (existingCountryLabel) [existingCountryLabel removeFromSuperview];
+    
+    // 获取视频模型
+    AWEAwemeBaseViewController *rootVC = self.viewController;
+    if (!rootVC || !rootVC.model) return;
+    
+    AWEAwemeModel *model = rootVC.model;
+    NSNumber *createTime = model.createTime;
+    NSString *region = model.region;
+    
+    // 获取视频描述标签作为参考位置
+    UILabel *descLabel = nil;
+    for (UIView *subview in self.subviews) {
+        if ([subview isKindOfClass:[UILabel class]]) {
+            UILabel *label = (UILabel *)subview;
+            if (label.text && [label.text containsString:model.desc]) {
+                descLabel = label;
+                break;
+            }
+        }
+    }
+    
+    if (!descLabel) return;
+    
+    // 添加上传日期标签
+    if ([BHIManager videoUploadDate] && createTime) {
+        UILabel *uploadDateLabel = [[UILabel alloc] init];
+        uploadDateLabel.tag = 1001;
+        uploadDateLabel.text = [self formattedDateStringFromTimestamp:[createTime doubleValue]];
+        uploadDateLabel.font = [UIFont systemFontOfSize:12];
+        uploadDateLabel.textColor = [UIColor whiteColor];
+        uploadDateLabel.translatesAutoresizingMaskIntoConstraints = NO;
+        
+        // 添加时钟图标
+        NSTextAttachment *clockAttachment = [[NSTextAttachment alloc] init];
+        clockAttachment.image = [UIImage systemImageNamed:@"clock"];
+        NSAttributedString *clockIcon = [NSAttributedString attributedStringWithAttachment:clockAttachment];
+        NSMutableAttributedString *dateText = [[NSMutableAttributedString alloc] initWithAttributedString:clockIcon];
+        [dateText appendAttributedString:[[NSAttributedString alloc] initWithString:@" "]];
+        [dateText appendAttributedString:[[NSAttributedString alloc] initWithString:uploadDateLabel.text]];
+        uploadDateLabel.attributedText = dateText;
+        
+        [self addSubview:uploadDateLabel];
+        
+        // 设置约束
+        [NSLayoutConstraint activateConstraints:@[
+            [uploadDateLabel.topAnchor constraintEqualToAnchor:descLabel.bottomAnchor constant:5],
+            [uploadDateLabel.leadingAnchor constraintEqualToAnchor:descLabel.leadingAnchor],
+            [uploadDateLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.trailingAnchor constant:-20]
+        ]];
+    }
+    
+    // 添加国家标签
+    if ([BHIManager uploadRegion] && region) {
+        UILabel *countryLabel = [[UILabel alloc] init];
+        countryLabel.tag = 1002;
+        countryLabel.font = [UIFont systemFontOfSize:12];
+        countryLabel.textColor = [UIColor whiteColor];
+        countryLabel.translatesAutoresizingMaskIntoConstraints = NO;
+        
+        // 获取国家代码并转换为国旗emoji
+        NSString *countryCode = [self getCountryCodeFromRegion:region];
+        NSString *flagEmoji = flagEmojiForCountryCode(countryCode);
+        NSString *countryText = [NSString stringWithFormat:@"%@ %@", flagEmoji, region];
+        
+        // 添加地球图标
+        NSTextAttachment *globeAttachment = [[NSTextAttachment alloc] init];
+        globeAttachment.image = [UIImage systemImageNamed:@"globe"];
+        NSAttributedString *globeIcon = [NSAttributedString attributedStringWithAttachment:globeAttachment];
+        NSMutableAttributedString *regionText = [[NSMutableAttributedString alloc] initWithAttributedString:globeIcon];
+        [regionText appendAttributedString:[[NSAttributedString alloc] initWithString:@" "]];
+        [regionText appendAttributedString:[[NSAttributedString alloc] initWithString:countryText]];
+        countryLabel.attributedText = regionText;
+        
+        [self addSubview:countryLabel];
+        
+        // 设置约束 - 根据日期标签是否存在调整位置
+        UIView *dateLabel = [self viewWithTag:1001];
+        if (dateLabel) {
+            [NSLayoutConstraint activateConstraints:@[
+                [countryLabel.topAnchor constraintEqualToAnchor:dateLabel.bottomAnchor constant:3],
+                [countryLabel.leadingAnchor constraintEqualToAnchor:descLabel.leadingAnchor],
+                [countryLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.trailingAnchor constant:-20]
+            ]];
+        } else {
+            [NSLayoutConstraint activateConstraints:@[
+                [countryLabel.topAnchor constraintEqualToAnchor:descLabel.bottomAnchor constant:5],
+                [countryLabel.leadingAnchor constraintEqualToAnchor:descLabel.leadingAnchor],
+                [countryLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.trailingAnchor constant:-20]
+            ]];
+        }
+    }
+}
+
+// 格式化日期时间戳为字符串
+%new - (NSString *)formattedDateStringFromTimestamp:(NSTimeInterval)timestamp {
+    NSDate *date = [NSDate dateWithTimeIntervalSince1970:timestamp];
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    formatter.dateFormat = @"yyyy-MM-dd";
+    return [formatter stringFromDate:date];
+}
+
+// 根据地区名称获取国家代码
+%new - (NSString *)getCountryCodeFromRegion:(NSString *)region {
+    // 常见地区名称到国家代码的映射
+    NSDictionary *regionToCountryCode = @{
+        @"United States": @"US",
+        @"United Kingdom": @"GB",
+        @"China": @"CN",
+        @"Japan": @"JP",
+        @"South Korea": @"KR",
+        @"Canada": @"CA",
+        @"Australia": @"AU",
+        @"France": @"FR",
+        @"Germany": @"DE",
+        @"Italy": @"IT",
+        @"Spain": @"ES",
+        @"Russia": @"RU",
+        @"India": @"IN",
+        @"Brazil": @"BR",
+        @"Mexico": @"MX",
+        @"Argentina": @"AR",
+        @"Chile": @"CL",
+        @"Colombia": @"CO",
+        @"Peru": @"PE",
+        @"Venezuela": @"VE",
+        @"Egypt": @"EG",
+        @"South Africa": @"ZA",
+        @"Nigeria": @"NG",
+        @"Kenya": @"KE",
+        @"Morocco": @"MA",
+        @"Ghana": @"GH",
+        @"Thailand": @"TH",
+        @"Vietnam": @"VN",
+        @"Philippines": @"PH",
+        @"Indonesia": @"ID",
+        @"Malaysia": @"MY",
+        @"Singapore": @"SG",
+        @"Pakistan": @"PK",
+        @"Bangladesh": @"BD",
+        @"Sri Lanka": @"LK",
+        @"Myanmar": @"MM",
+        @"Cambodia": @"KH",
+        @"Laos": @"LA",
+        @"New Zealand": @"NZ",
+        @"Turkey": @"TR",
+        @"Saudi Arabia": @"SA",
+        @"Israel": @"IL",
+        @"UAE": @"AE",
+        @"Iran": @"IR",
+        @"Iraq": @"IQ",
+        @"Poland": @"PL",
+        @"Netherlands": @"NL",
+        @"Belgium": @"BE",
+        @"Switzerland": @"CH",
+        @"Austria": @"AT",
+        @"Sweden": @"SE",
+        @"Norway": @"NO",
+        @"Denmark": @"DK",
+        @"Finland": @"FI",
+        @"Greece": @"GR",
+        @"Portugal": @"PT",
+        @"Ireland": @"IE",
+        @"Czech Republic": @"CZ",
+        @"Hungary": @"HU",
+        @"Romania": @"RO",
+        @"Bulgaria": @"BG",
+        @"Croatia": @"HR",
+        @"Slovakia": @"SK",
+        @"Slovenia": @"SI",
+        @"Estonia": @"EE",
+        @"Latvia": @"LV",
+        @"Lithuania": @"LT",
+        @"Ukraine": @"UA",
+        @"Belarus": @"BY",
+        @"Moldova": @"MD",
+        @"Cyprus": @"CY",
+        @"Luxembourg": @"LU",
+        @"Malta": @"MT",
+        @"Iceland": @"IS",
+        @"Albania": @"AL",
+        @"Macedonia": @"MK",
+        @"Serbia": @"RS",
+        @"Montenegro": @"ME",
+        @"Bosnia": @"BA",
+        @"Senegal": @"SN",
+        @"Ivory Coast": @"CI",
+        @"Mali": @"ML",
+        @"Burkina Faso": @"BF",
+        @"Niger": @"NE",
+        @"Benin": @"BJ",
+        @"Togo": @"TG",
+        @"Guinea": @"GN",
+        @"Sierra Leone": @"SL",
+        @"Liberia": @"LR",
+        @"Gambia": @"GM",
+        @"Guinea-Bissau": @"GW",
+        @"Cape Verde": @"CV",
+        @"Mauritania": @"MR",
+        @"Somalia": @"SO",
+        @"Djibouti": @"DJ",
+        @"Eritrea": @"ER",
+        @"Sudan": @"SD",
+        @"Libya": @"LY",
+        @"Tunisia": @"TN",
+        @"Algeria": @"DZ",
+        @"Morocco": @"MA"
+    };
+    
+    // 尝试从映射中获取国家代码
+    NSString *countryCode = regionToCountryCode[region];
+    if (countryCode) {
+        return countryCode;
+    }
+    
+    // 如果没有找到，尝试从地区名称中提取可能的代码
+    if (region.length >= 2) {
+        // 尝试取最后两个字符作为国家代码
+        NSString *possibleCode = [[region substringFromIndex:region.length - 2] uppercaseString];
+        return possibleCode;
+    }
+    
+    // 默认返回US
+    return @"US";
 }
 %end
 
