@@ -15,7 +15,7 @@ static void showAlert(NSString *title, NSString *message, NSString *okTitle, NSS
 }
 
 static void showConfirmation(void (^okHandler)(void)) {
-  showAlert(NSLocalizedString(@"BHTikTok, Hi", nil), NSLocalizedString(@"Are you sure?", nil), NSLocalizedString(@"Yes", nil), NSLocalizedString(@"No", nil), okHandler);
+  showAlert([BHIManager L:@"BHTikTok, Hi"], [BHIManager L:@"Are you sure?"], [BHIManager L:@"Yes"], [BHIManager L:@"No"], okHandler);
 }
 
 static NSString *flagEmojiForCountryCode(NSString *code) {
@@ -58,10 +58,26 @@ static NSString *flagEmojiForCountryCode(NSString *code) {
     // Initialize language setting before calling orig
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSString *savedLanguage = [defaults objectForKey:@"BHTikTok_Language"];
-    if (savedLanguage) {
-        // Apply saved language preference
-        [self applyLanguageSetting:savedLanguage];
+    
+    // If no saved language, use system language as default
+    if (!savedLanguage) {
+        NSArray *languages = [defaults objectForKey:@"AppleLanguages"];
+        NSString *systemLanguage = languages.firstObject;
+        
+        // Check if system language is Chinese
+        if ([systemLanguage hasPrefix:@"zh"]) {
+            savedLanguage = @"zh-Hans";
+        } else {
+            savedLanguage = @"en";
+        }
+        
+        // Save the default language
+        [defaults setObject:savedLanguage forKey:@"BHTikTok_Language"];
+        [defaults synchronize];
     }
+    
+    // Apply saved language preference
+    [self applyLanguageSetting:savedLanguage];
     
     %orig;
     
@@ -89,8 +105,12 @@ static NSString *flagEmojiForCountryCode(NSString *code) {
     [[NSUserDefaults standardUserDefaults] setObject:language forKey:@"BHTikTok_Language"];
     [[NSUserDefaults standardUserDefaults] synchronize];
     
-    // Force localization update
-    [[NSBundle mainBundle] localizedStringForKey:@"" value:@"" table:nil];
+    // Force localization update by reloading the bundle
+    NSBundle *bundle = [NSBundle mainBundle];
+    [bundle localizedStringForKey:@"" value:@"" table:nil];
+    
+    // Post notification to inform views to update their text
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"LanguageChanged" object:language];
 }
 
 static BOOL isAuthenticationShowed = FALSE;
@@ -269,7 +289,7 @@ static BOOL isAuthenticationShowed = FALSE;
 }
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
     if (sender.state == UIGestureRecognizerStateBegan) {
-        showAlert(NSLocalizedString(@"Save profile image", nil), NSLocalizedString(@"Do you want to save this image", nil), NSLocalizedString(@"Yes", nil), NSLocalizedString(@"No", nil), ^{
+        showAlert([BHIManager L:@"Save profile image"], [BHIManager L:@"Do you want to save this image"], [BHIManager L:@"Yes"], [BHIManager L:@"No"], ^{
             UIImageWriteToSavedPhotosAlbum([self bd_baseImage], self, @selector(image:didFinishSavingWithError:contextInfo:), nil);
         });
     }
@@ -307,7 +327,7 @@ static BOOL isAuthenticationShowed = FALSE;
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
     if (sender.state == UIGestureRecognizerStateBegan) {
         NSString *profileDescription = [self text];
-        showAlert(NSLocalizedString(@"Copy bio", nil), NSLocalizedString(@"Do you want to copy this text to clipboard", nil), NSLocalizedString(@"Yes", nil), NSLocalizedString(@"No", nil), ^{
+        showAlert([BHIManager L:@"Copy bio"], [BHIManager L:@"Do you want to copy this text to clipboard"], [BHIManager L:@"Yes"], [BHIManager L:@"No"], ^{
              if (profileDescription) {
                 UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
                 pasteboard.string = profileDescription;
@@ -350,8 +370,8 @@ static BOOL isAuthenticationShowed = FALSE;
         TTKSettingsBaseCellPlugin *BHTikTokSettingsPluginCell = [[CellClass alloc] initWithPluginContext:self.context];
 
         AWESettingItemModel *BHTikTokSettingsItemModel = [[ItemClass alloc] initWithIdentifier:@"bhtiktok_settings"];
-        [BHTikTokSettingsItemModel setTitle:NSLocalizedString(@"BHTikTok++ settings", nil)];
-        [BHTikTokSettingsItemModel setDetail:NSLocalizedString(@"BHTikTok++ settings", nil)];
+        [BHTikTokSettingsItemModel setTitle:[BHIManager L:@"BHTikTok++ settings"]];
+    [BHTikTokSettingsItemModel setDetail:[BHIManager L:@"BHTikTok++ settings"]];
         [BHTikTokSettingsItemModel setIconImage:[UIImage systemImageNamed:@"gear"]];
         [BHTikTokSettingsItemModel setType:99];
 
@@ -1756,35 +1776,29 @@ static BOOL isAuthenticationShowed = FALSE;
     NSNumber *createTime = model.createTime;
     NSString *region = model.region;
     
-    // 获取视频描述标签作为参考位置，如果找不到则使用其他标签
-    UILabel *referenceLabel = nil;
+    // 查找用户名标签作为参考位置
+    UIView *usernameButton = nil;
     for (UIView *subview in self.subviews) {
-        if ([subview isKindOfClass:[UILabel class]]) {
-            UILabel *label = (UILabel *)subview;
-            if (label.text && [label.text containsString:model.music_songName]) {
-                referenceLabel = label;
-                break;
-            }
+        // 查找AWEPlayInteractionAuthorUserNameButton
+        if ([subview isKindOfClass:%c(AWEPlayInteractionAuthorUserNameButton)]) {
+            usernameButton = subview;
+            break;
         }
     }
     
-    // 如果找不到描述标签，尝试找到其他合适的标签作为参考
-    if (!referenceLabel) {
+    // 如果没找到用户名按钮，尝试查找其他可能的用户名相关视图
+    if (!usernameButton) {
         for (UIView *subview in self.subviews) {
-            if ([subview isKindOfClass:[UILabel class]]) {
-                UILabel *label = (UILabel *)subview;
-                if (label.text && label.text.length > 0) {
-                    referenceLabel = label;
+            // 查找包含用户名标签的视图
+            for (UIView *subSubview in subview.subviews) {
+                if ([subSubview isKindOfClass:%c(AWEUserNameLabel)]) {
+                    usernameButton = subview;
                     break;
                 }
             }
+            if (usernameButton) break;
         }
     }
-    
-    // 如果还是找不到参考标签，直接在底部添加标签
-    CGFloat topOffset = referenceLabel ? 
-        CGRectGetMaxY(referenceLabel.frame) + 5 : 
-        self.bounds.size.height - 60;
     
     // 添加上传日期标签
     if ([BHIManager videoUploadDate] && createTime) {
@@ -1806,16 +1820,17 @@ static BOOL isAuthenticationShowed = FALSE;
         
         [self addSubview:uploadDateLabel];
         
-        // 设置约束
-        if (referenceLabel) {
+        // 设置约束 - 基于用户名按钮位置
+        if (usernameButton) {
             [NSLayoutConstraint activateConstraints:@[
-                [uploadDateLabel.topAnchor constraintEqualToAnchor:referenceLabel.bottomAnchor constant:5],
-                [uploadDateLabel.leadingAnchor constraintEqualToAnchor:referenceLabel.leadingAnchor],
+                [uploadDateLabel.topAnchor constraintEqualToAnchor:usernameButton.bottomAnchor constant:10], // 用户名下方空一行
+                [uploadDateLabel.leadingAnchor constraintEqualToAnchor:usernameButton.leadingAnchor],
                 [uploadDateLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.trailingAnchor constant:-20]
             ]];
         } else {
+            // 如果找不到用户名按钮，使用默认位置
             [NSLayoutConstraint activateConstraints:@[
-                [uploadDateLabel.topAnchor constraintEqualToAnchor:self.topAnchor constant:topOffset],
+                [uploadDateLabel.topAnchor constraintEqualToAnchor:self.topAnchor constant:120],
                 [uploadDateLabel.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:10],
                 [uploadDateLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.trailingAnchor constant:-20]
             ]];
@@ -1846,23 +1861,25 @@ static BOOL isAuthenticationShowed = FALSE;
         
         [self addSubview:countryLabel];
         
-        // 设置约束 - 根据日期标签是否存在调整位置
+        // 设置约束 - 基于日期标签位置
         UIView *dateLabel = [self viewWithTag:1001];
         if (dateLabel) {
             [NSLayoutConstraint activateConstraints:@[
-                [countryLabel.topAnchor constraintEqualToAnchor:dateLabel.bottomAnchor constant:3],
+                [countryLabel.topAnchor constraintEqualToAnchor:dateLabel.bottomAnchor constant:10], // 日期下方空一行
                 [countryLabel.leadingAnchor constraintEqualToAnchor:dateLabel.leadingAnchor],
                 [countryLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.trailingAnchor constant:-20]
             ]];
-        } else if (referenceLabel) {
+        } else if (usernameButton) {
+            // 如果没有日期标签但有用户名按钮，直接放在用户名下方
             [NSLayoutConstraint activateConstraints:@[
-                [countryLabel.topAnchor constraintEqualToAnchor:referenceLabel.bottomAnchor constant:5],
-                [countryLabel.leadingAnchor constraintEqualToAnchor:referenceLabel.leadingAnchor],
+                [countryLabel.topAnchor constraintEqualToAnchor:usernameButton.bottomAnchor constant:10], // 用户名下方空一行
+                [countryLabel.leadingAnchor constraintEqualToAnchor:usernameButton.leadingAnchor],
                 [countryLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.trailingAnchor constant:-20]
             ]];
         } else {
+            // 如果都找不到，使用默认位置
             [NSLayoutConstraint activateConstraints:@[
-                [countryLabel.topAnchor constraintEqualToAnchor:self.topAnchor constant:topOffset],
+                [countryLabel.topAnchor constraintEqualToAnchor:self.topAnchor constant:150],
                 [countryLabel.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:10],
                 [countryLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.trailingAnchor constant:-20]
             ]];
