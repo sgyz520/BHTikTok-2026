@@ -96,9 +96,6 @@
 + (BOOL)videoLikeCount {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"video_like_count"];
 }
-+ (BOOL)uploadRegion {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"upload_region"];
-}
 + (BOOL)videoUploadDate {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"video_upload_date"];
 }
