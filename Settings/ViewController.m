@@ -9,6 +9,7 @@
 #import "CountryTable.h"
 #import "LiveActions.h"
 #import "PlaybackSpeed.h"
+#import "../TikTokHeaders.h"
 
 @interface ViewController ()
 @property (nonatomic, strong) UITableView *staticTable;
@@ -501,6 +502,12 @@
         NSString *language = sender.isOn ? @"zh-Hans" : @"en";
         [defaults setObject:language forKey:@"BHTikTok_Language"];
         [defaults synchronize];
+        
+        // 立即应用语言设置
+        AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+        if ([appDelegate respondsToSelector:@selector(applyLanguageSetting:)]) {
+            [appDelegate applyLanguageSetting:language];
+        }
         
         // 显示提示，告知用户需要重启应用
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Language Changed", nil) message:NSLocalizedString(@"Please restart the app to apply the changes.", nil) preferredStyle:UIAlertControllerStyleAlert];

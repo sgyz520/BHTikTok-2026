@@ -19,14 +19,33 @@ static void showConfirmation(void (^okHandler)(void)) {
 }
 
 static NSString *flagEmojiForCountryCode(NSString *code) {
-  if (!code || code.length < 2) return nil;
+  if (!code || code.length < 2) return @"🌍";
   NSString *upper = [code.uppercaseString substringToIndex:2];
   unichar a = [upper characterAtIndex:0];
   unichar b = [upper characterAtIndex:1];
+  
+  // 验证字符是否在A-Z范围内
+  if (a < 'A' || a > 'Z' || b < 'A' || b > 'Z') {
+    return @"🌍";
+  }
+  
   int base = 127397;
   unichar ua = (unichar)(a + base);
   unichar ub = (unichar)(b + base);
-  return [[NSString alloc] initWithCharacters:(unichar[]){ua, ub} length:2];
+  
+  // 验证生成的Unicode字符是否在国旗emoji范围内
+  if (ua < 0x1F1E6 || ua > 0x1F1FF || ub < 0x1F1E6 || ub > 0x1F1FF) {
+    return @"🌍";
+  }
+  
+  NSString *flagEmoji = [[NSString alloc] initWithCharacters:(unichar[]){ua, ub} length:2];
+  
+  // 检查生成的emoji是否有效
+  if (!flagEmoji || flagEmoji.length == 0) {
+    return @"🌍";
+  }
+  
+  return flagEmoji;
 }
 
 %hook AppDelegate
@@ -36,8 +55,7 @@ static NSString *flagEmojiForCountryCode(NSString *code) {
     NSString *savedLanguage = [defaults objectForKey:@"BHTikTok_Language"];
     if (savedLanguage) {
         // Apply saved language preference
-        [[NSUserDefaults standardUserDefaults] setObject:@[savedLanguage] forKey:@"AppleLanguages"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
+        [self applyLanguageSetting:savedLanguage];
     }
     
     %orig;
@@ -58,6 +76,16 @@ static NSString *flagEmojiForCountryCode(NSString *code) {
     }
     [BHIManager cleanCache];
     return true;
+}
+
+%new - (void)applyLanguageSetting:(NSString *)language {
+    // Apply language setting immediately
+    [[NSUserDefaults standardUserDefaults] setObject:@[language] forKey:@"AppleLanguages"];
+    [[NSUserDefaults standardUserDefaults] setObject:language forKey:@"BHTikTok_Language"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    
+    // Force localization update
+    [[NSBundle mainBundle] localizedStringForKey:@"" value:@"" table:nil];
 }
 
 static BOOL isAuthenticationShowed = FALSE;
@@ -1723,19 +1751,35 @@ static BOOL isAuthenticationShowed = FALSE;
     NSNumber *createTime = model.createTime;
     NSString *region = model.region;
     
-    // 获取视频描述标签作为参考位置
-    UILabel *descLabel = nil;
+    // 获取视频描述标签作为参考位置，如果找不到则使用其他标签
+    UILabel *referenceLabel = nil;
     for (UIView *subview in self.subviews) {
         if ([subview isKindOfClass:[UILabel class]]) {
             UILabel *label = (UILabel *)subview;
             if (label.text && [label.text containsString:model.music_songName]) {
-                descLabel = label;
+                referenceLabel = label;
                 break;
             }
         }
     }
     
-    if (!descLabel) return;
+    // 如果找不到描述标签，尝试找到其他合适的标签作为参考
+    if (!referenceLabel) {
+        for (UIView *subview in self.subviews) {
+            if ([subview isKindOfClass:[UILabel class]]) {
+                UILabel *label = (UILabel *)subview;
+                if (label.text && label.text.length > 0) {
+                    referenceLabel = label;
+                    break;
+                }
+            }
+        }
+    }
+    
+    // 如果还是找不到参考标签，直接在底部添加标签
+    CGFloat topOffset = referenceLabel ? 
+        CGRectGetMaxY(referenceLabel.frame) + 5 : 
+        self.bounds.size.height - 60;
     
     // 添加上传日期标签
     if ([BHIManager videoUploadDate] && createTime) {
@@ -1758,11 +1802,19 @@ static BOOL isAuthenticationShowed = FALSE;
         [self addSubview:uploadDateLabel];
         
         // 设置约束
-        [NSLayoutConstraint activateConstraints:@[
-            [uploadDateLabel.topAnchor constraintEqualToAnchor:descLabel.bottomAnchor constant:5],
-            [uploadDateLabel.leadingAnchor constraintEqualToAnchor:descLabel.leadingAnchor],
-            [uploadDateLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.trailingAnchor constant:-20]
-        ]];
+        if (referenceLabel) {
+            [NSLayoutConstraint activateConstraints:@[
+                [uploadDateLabel.topAnchor constraintEqualToAnchor:referenceLabel.bottomAnchor constant:5],
+                [uploadDateLabel.leadingAnchor constraintEqualToAnchor:referenceLabel.leadingAnchor],
+                [uploadDateLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.trailingAnchor constant:-20]
+            ]];
+        } else {
+            [NSLayoutConstraint activateConstraints:@[
+                [uploadDateLabel.topAnchor constraintEqualToAnchor:self.topAnchor constant:topOffset],
+                [uploadDateLabel.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:10],
+                [uploadDateLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.trailingAnchor constant:-20]
+            ]];
+        }
     }
     
     // 添加国家标签
@@ -1794,13 +1846,19 @@ static BOOL isAuthenticationShowed = FALSE;
         if (dateLabel) {
             [NSLayoutConstraint activateConstraints:@[
                 [countryLabel.topAnchor constraintEqualToAnchor:dateLabel.bottomAnchor constant:3],
-                [countryLabel.leadingAnchor constraintEqualToAnchor:descLabel.leadingAnchor],
+                [countryLabel.leadingAnchor constraintEqualToAnchor:dateLabel.leadingAnchor],
+                [countryLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.trailingAnchor constant:-20]
+            ]];
+        } else if (referenceLabel) {
+            [NSLayoutConstraint activateConstraints:@[
+                [countryLabel.topAnchor constraintEqualToAnchor:referenceLabel.bottomAnchor constant:5],
+                [countryLabel.leadingAnchor constraintEqualToAnchor:referenceLabel.leadingAnchor],
                 [countryLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.trailingAnchor constant:-20]
             ]];
         } else {
             [NSLayoutConstraint activateConstraints:@[
-                [countryLabel.topAnchor constraintEqualToAnchor:descLabel.bottomAnchor constant:5],
-                [countryLabel.leadingAnchor constraintEqualToAnchor:descLabel.leadingAnchor],
+                [countryLabel.topAnchor constraintEqualToAnchor:self.topAnchor constant:topOffset],
+                [countryLabel.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:10],
                 [countryLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.trailingAnchor constant:-20]
             ]];
         }
