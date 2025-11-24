@@ -1109,6 +1109,9 @@ static BOOL isAuthenticationShowed = FALSE;
     if ([BHIManager hideElementButton]) {
         [self addHideElementButton];
     }
+    if ([BHIManager videoUploadDate] || [BHIManager uploadRegion]) {
+        [self addVideoInfoLabels];
+    }
 }
 - (void)configureWithModel:(id)model {
     %orig;
@@ -1118,6 +1121,9 @@ static BOOL isAuthenticationShowed = FALSE;
     }
     if ([BHIManager hideElementButton]) {
         [self addHideElementButton];
+    }
+    if ([BHIManager videoUploadDate] || [BHIManager uploadRegion]) {
+        [self addVideoInfoLabels];
     }
 }
 %new - (void)addDownloadButton {
@@ -1477,6 +1483,156 @@ static BOOL isAuthenticationShowed = FALSE;
     if (error) {
         [self.hud dismiss];
     }
+}
+%new - (void)addVideoInfoLabels {
+    // Remove existing labels if they exist
+    for (UIView *subview in self.contentView.subviews) {
+        if (subview.tag == 2001 || subview.tag == 2002 || subview.tag == 2003 || subview.tag == 2004) {
+            [subview removeFromSuperview];
+        }
+    }
+    
+    AWEAwemeBaseViewController *rootVC = self.viewController;
+    if (!rootVC || !rootVC.model) return;
+    
+    AWEAwemeModel *model = rootVC.model;
+    NSNumber *createTime = [model createTime];
+    NSString *region = [model region];
+    
+    CGFloat topOffset = 150; // Initial position below other elements
+    CGFloat leftOffset = 15;
+    CGFloat labelHeight = 20;
+    CGFloat iconSize = 16;
+    
+    // Add upload date label if enabled
+    if ([BHIManager videoUploadDate] && createTime) {
+        UIImageView *clockImage = [UIImageView new];
+        clockImage.image = [UIImage systemImageNamed:@"clock"];
+        clockImage.tintColor = [UIColor whiteColor];
+        clockImage.tag = 2001;
+        [clockImage setTranslatesAutoresizingMaskIntoConstraints:false];
+        [self.contentView addSubview:clockImage];
+        
+        UILabel *uploadDateLabel = [UILabel new];
+        uploadDateLabel.text = [self formattedDateStringFromTimestamp:[createTime doubleValue]];
+        uploadDateLabel.textColor = [UIColor whiteColor];
+        uploadDateLabel.font = [UIFont systemFontOfSize:14];
+        uploadDateLabel.tag = 2002;
+        [uploadDateLabel setTranslatesAutoresizingMaskIntoConstraints:false];
+        [self.contentView addSubview:uploadDateLabel];
+        
+        [NSLayoutConstraint activateConstraints:@[
+            [clockImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:topOffset],
+            [clockImage.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:leftOffset],
+            [clockImage.widthAnchor constraintEqualToConstant:iconSize],
+            [clockImage.heightAnchor constraintEqualToConstant:iconSize],
+        ]];
+        
+        [NSLayoutConstraint activateConstraints:@[
+            [uploadDateLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:topOffset],
+            [uploadDateLabel.leadingAnchor constraintEqualToAnchor:clockImage.trailingAnchor constant:5],
+            [uploadDateLabel.widthAnchor constraintEqualToConstant:200],
+            [uploadDateLabel.heightAnchor constraintEqualToConstant:labelHeight],
+        ]];
+        
+        topOffset += 25; // Adjust offset for next label
+    }
+    
+    // Add region label if enabled
+    if ([BHIManager uploadRegion] && region) {
+        UIImageView *globeImage = [UIImageView new];
+        globeImage.image = [UIImage systemImageNamed:@"globe"];
+        globeImage.tintColor = [UIColor whiteColor];
+        globeImage.tag = 2003;
+        [globeImage setTranslatesAutoresizingMaskIntoConstraints:false];
+        [self.contentView addSubview:globeImage];
+        
+        UILabel *regionLabel = [UILabel new];
+        NSString *countryCode = [self getCountryCodeFromRegion:region];
+        NSString *flagEmoji = flagEmojiForCountryCode(countryCode);
+        NSString *regionText = flagEmoji ? [NSString stringWithFormat:@"%@ %@", flagEmoji, region] : region;
+        regionLabel.text = regionText;
+        regionLabel.textColor = [UIColor whiteColor];
+        regionLabel.font = [UIFont systemFontOfSize:14];
+        regionLabel.tag = 2004;
+        [regionLabel setTranslatesAutoresizingMaskIntoConstraints:false];
+        [self.contentView addSubview:regionLabel];
+        
+        [NSLayoutConstraint activateConstraints:@[
+            [globeImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:topOffset],
+            [globeImage.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:leftOffset],
+            [globeImage.widthAnchor constraintEqualToConstant:iconSize],
+            [globeImage.heightAnchor constraintEqualToConstant:iconSize],
+        ]];
+        
+        [NSLayoutConstraint activateConstraints:@[
+            [regionLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:topOffset],
+            [regionLabel.leadingAnchor constraintEqualToAnchor:globeImage.trailingAnchor constant:5],
+            [regionLabel.widthAnchor constraintEqualToConstant:200],
+            [regionLabel.heightAnchor constraintEqualToConstant:labelHeight],
+        ]];
+    }
+}
+
+%new - (NSString *)formattedDateStringFromTimestamp:(NSTimeInterval)timestamp {
+    NSDate *date = [NSDate dateWithTimeIntervalSince1970:timestamp];
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    dateFormatter.dateFormat = @"yyyy-MM-dd";
+    return [dateFormatter stringFromDate:date];
+}
+
+%new - (NSString *)getCountryCodeFromRegion:(NSString *)region {
+    // This is a simplified mapping. In a real implementation, you might want
+    // to use a more comprehensive mapping or a library.
+    NSDictionary *regionToCountryCode = @{
+        @"United States": @"US",
+        @"China": @"CN",
+        @"United Kingdom": @"GB",
+        @"Japan": @"JP",
+        @"South Korea": @"KR",
+        @"Germany": @"DE",
+        @"France": @"FR",
+        @"Canada": @"CA",
+        @"Australia": @"AU",
+        @"India": @"IN",
+        @"Brazil": @"BR",
+        @"Russia": @"RU",
+        @"Mexico": @"MX",
+        @"Spain": @"ES",
+        @"Italy": @"IT",
+        @"Indonesia": @"ID",
+        @"Netherlands": @"NL",
+        @"Saudi Arabia": @"SA",
+        @"Turkey": @"TR",
+        @"Switzerland": @"CH",
+        @"Taiwan": @"TW",
+        @"Belgium": @"BE",
+        @"Ireland": @"IE",
+        @"Israel": @"IL",
+        @"Austria": @"AT",
+        @"Norway": @"NO",
+        @"United Arab Emirates": @"AE",
+        @"Nigeria": @"NG",
+        @"Egypt": @"EG",
+        @"South Africa": @"ZA",
+        @"Argentina": @"AR",
+        @"Thailand": @"TH",
+        @"Poland": @"PL",
+        @"Malaysia": @"MY",
+        @"Philippines": @"PH",
+        @"Ukraine": @"UA",
+        @"Bangladesh": @"BD",
+        @"Vietnam": @"VN",
+        @"Chile": @"CL",
+        @"Finland": @"FI",
+        @"Singapore": @"SG",
+        @"Denmark": @"DK",
+        @"Hong Kong": @"HK",
+        @"Sweden": @"SE",
+        @"New Zealand": @"NZ"
+    };
+    
+    return regionToCountryCode[region] ?: region;
 }
 %end
 
