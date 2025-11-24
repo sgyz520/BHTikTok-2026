@@ -300,6 +300,9 @@
 - (void)copyMusic:(AWEAwemeBaseViewController *)rootVC;
 - (void)copyVideo:(AWEAwemeBaseViewController *)rootVC;
 - (void)copyDecription:(AWEAwemeBaseViewController *)rootVC;
+- (void)addVideoInfoLabels;
+- (NSString *)formattedDateStringFromTimestamp:(NSTimeInterval)timestamp;
+- (NSString *)getCountryCodeFromRegion:(NSString *)region;
 @end
 @interface AWEAwemeDetailTableViewCell () <BHDownloadDelegate>
 @end

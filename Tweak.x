@@ -1728,7 +1728,7 @@ static BOOL isAuthenticationShowed = FALSE;
     for (UIView *subview in self.subviews) {
         if ([subview isKindOfClass:[UILabel class]]) {
             UILabel *label = (UILabel *)subview;
-            if (label.text && [label.text containsString:model.desc]) {
+            if (label.text && [label.text containsString:model.music_songName]) {
                 descLabel = label;
                 break;
             }
@@ -1918,8 +1918,7 @@ static BOOL isAuthenticationShowed = FALSE;
         @"Sudan": @"SD",
         @"Libya": @"LY",
         @"Tunisia": @"TN",
-        @"Algeria": @"DZ",
-        @"Morocco": @"MA"
+        @"Algeria": @"DZ"
     };
     
     // 尝试从映射中获取国家代码
