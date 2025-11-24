@@ -54,7 +54,7 @@
 - (void)languageChanged:(NSNotification *)notification {
     // 语言设置改变时，重新加载表格视图以更新文本
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self.tableView reloadData];
+        [self.staticTable reloadData];
         
         // 更新导航栏标题
         self.title = [BHIManager L:@"BHTikTok++ Settings"];
