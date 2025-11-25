@@ -1083,7 +1083,19 @@ static BOOL isAuthenticationShowed = FALSE;
 - (void)layoutSubviews {
     %orig;
     if ([BHIManager uploadRegion]){
-        // 移除所有已存在的地区标签
+        // 遍历所有子视图，找到UIStackView并将其x坐标设置为39.5，为地区标签腾出空间
+        for (int i = 0; i < [[self subviews] count]; i ++){
+            id j = [[self subviews] objectAtIndex:i];
+            if ([j isKindOfClass:%c(UIStackView)]){
+                CGRect frame = [j frame];
+                frame.origin.x = 39.5; 
+                [j setFrame:frame];
+            }else {
+                [[self viewWithTag:666] removeFromSuperview];
+            }
+        }
+        
+        // 移除已存在的地区标签
         [[self viewWithTag:666] removeFromSuperview];
         
         AWEFeedCellViewController* rootVC = self.yy_viewController;
@@ -1092,34 +1104,13 @@ static BOOL isAuthenticationShowed = FALSE;
         
         // 只有当countryID不为空且不是问号时才显示
         if (countryID && countryID.length > 0 && ![countryID isEqualToString:@"?"]) {
-            // 获取用户名标签的宽度和位置
-            UIView *usernameView = nil;
-            for (UIView *subview in self.subviews) {
-                if ([subview isKindOfClass:%c(TUXLabel)]) {
-                    usernameView = subview;
-                    break;
-                }
-            }
-            
-            // 创建地区标签
-            UILabel *uploadLabel = [[UILabel alloc] init];
-            uploadLabel.text = [NSString stringWithFormat:@"%@",countryID];
+            UILabel *uploadLabel = [[UILabel alloc]initWithFrame:CGRectMake(0,2,39.5,20.5)];
+            // 直接显示地区文字，不使用emoji
+            uploadLabel.text = [NSString stringWithFormat:@"%@ •",countryID];
             uploadLabel.tag = 666;
             [uploadLabel setTextColor: [UIColor whiteColor]];
             [uploadLabel setFont: [UIFont systemFontOfSize:12]];
             [uploadLabel sizeToFit];
-            
-            // 设置地区标签位置，放在用户名右侧，避免重叠
-            if (usernameView) {
-                CGFloat usernameRight = usernameView.frame.origin.x + usernameView.frame.size.width;
-                CGFloat labelX = usernameRight + 5; // 用户名右侧5像素间距
-                CGFloat labelY = usernameView.frame.origin.y + 2; // 与用户名垂直对齐
-                uploadLabel.frame = CGRectMake(labelX, labelY, uploadLabel.frame.size.width, uploadLabel.frame.size.height);
-            } else {
-                // 如果找不到用户名标签，使用默认位置
-                uploadLabel.frame = CGRectMake(0, 2, uploadLabel.frame.size.width, uploadLabel.frame.size.height);
-            }
-            
             [self addSubview:uploadLabel];
         }
     }
