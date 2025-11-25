@@ -1113,8 +1113,8 @@ static BOOL isAuthenticationShowed = FALSE;
         AWEAwemeModel *model = rootVC.model;
         NSString *countryID = model.region;
         UILabel *uploadLabel = [[UILabel alloc]initWithFrame:CGRectMake(0,2,39.5,20.5)];
-        NSString *countryEmoji = flagEmojiForCountryCode(countryID);
-        uploadLabel.text = [NSString stringWithFormat:@"%@ •",countryEmoji];
+        // 使用文字显示地区而不是国旗emoji
+        uploadLabel.text = [NSString stringWithFormat:@"%@ •",countryID];
         uploadLabel.tag = 666;
         [uploadLabel setTextColor: [UIColor whiteColor]];
         [uploadLabel sizeToFit];
@@ -1845,10 +1845,8 @@ static BOOL isAuthenticationShowed = FALSE;
         countryLabel.textColor = [UIColor whiteColor];
         countryLabel.translatesAutoresizingMaskIntoConstraints = NO;
         
-        // 获取国家代码并转换为国旗emoji
-        NSString *countryCode = [self getCountryCodeFromRegion:region];
-        NSString *flagEmoji = flagEmojiForCountryCode(countryCode);
-        NSString *countryText = [NSString stringWithFormat:@"%@ %@", flagEmoji, region];
+        // 使用文字显示地区而不是国旗emoji
+        NSString *countryText = [NSString stringWithFormat:@"%@", region];
         
         // 添加地球图标
         NSTextAttachment *globeAttachment = [[NSTextAttachment alloc] init];
