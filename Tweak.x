@@ -1375,7 +1375,7 @@ static NSString *getMultiLevelLocationInfo(NSString *regionCode, NSString *cityC
         AWEFeedCellViewController* rootVC = self.yy_viewController;
         AWEAwemeModel *model = rootVC.model;
         NSString *countryID = model.region;
-        NSString *cityCode = model.cityCode;
+        NSString *regionCode = model.region;
         
         // 只有当countryID不为空且不是问号时才显示
         if (countryID && countryID.length > 0 && ![countryID isEqualToString:@"?"]) {
@@ -1384,7 +1384,7 @@ static NSString *getMultiLevelLocationInfo(NSString *regionCode, NSString *cityC
             // 根据设置决定使用多级属地显示还是只显示国家名称
             NSString *locationInfo;
             if ([BHIManager multiLevelLocation]) {
-                locationInfo = getMultiLevelLocationInfo(countryID, cityCode);
+                locationInfo = getMultiLevelLocationInfo(countryID, regionCode);
             } else {
                 locationInfo = getCountryNameForCode(countryID);
             }

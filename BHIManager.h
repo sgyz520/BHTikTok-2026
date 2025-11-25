@@ -13,6 +13,8 @@
 + (BOOL)uploadRegionRandomGradient;
 + (BOOL)multiLevelLocation;
 + (void)clearLocationCache;
++ (NSDictionary *)getCachedLocationInfo:(NSString *)cacheKey;
++ (void)saveLocationInfoToCache:(NSString *)cacheKey locationInfo:(NSDictionary *)locationInfo;
 + (BOOL)autoPlay;
 + (BOOL)stopPlay;
 + (BOOL)progressBar;
