@@ -52,18 +52,7 @@
 }
 
 + (NSString *)L:(NSString *)key {
-    // 首先检查用户是否设置了中文语言
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    NSString *savedLanguage = [defaults stringForKey:@"BHTikTok_Language"];
-    
-    // 如果用户设置了中文，则使用中文本地化
-    if (savedLanguage && [savedLanguage isEqualToString:@"zh-Hans"]) {
-        NSString *path = [[NSBundle mainBundle] pathForResource:@"zh-Hans" ofType:@"lproj"];
-        NSBundle *bundle = [NSBundle bundleWithPath:path];
-        return [bundle localizedStringForKey:key value:nil table:nil];
-    }
-    
-    // 否则使用默认的本地化
+    // 直接使用系统默认语言，不再检查用户设置的语言
     return NSLocalizedString(key, nil);
 }
 + (BOOL)likeConfirmation {
