@@ -830,17 +830,7 @@ static BOOL isAuthenticationShowed = FALSE;
             NSString *nickname = authorModel.nickname;
             NSString *username = authorModel.socialName;
             NSString *textOut = username;
-            if ([BHIManager uploadRegion]) {
-                NSString *regionCode = model.region;
-                if (!regionCode) {
-                    NSDictionary *selectedRegion = [BHIManager selectedRegion];
-                    regionCode = selectedRegion[@"code"];
-                }
-                NSString *flag = flagEmojiForCountryCode(regionCode);
-                if (flag) {
-                    textOut = [NSString stringWithFormat:@"%@ %@", username ?: arg1, flag];
-                }
-            }
+            // 不再添加国旗emoji，避免显示方框
             %orig(textOut);
         }else {
             %orig;
@@ -1093,27 +1083,23 @@ static BOOL isAuthenticationShowed = FALSE;
 - (void)layoutSubviews {
     %orig;
     if ([BHIManager uploadRegion]){
-        for (int i = 0; i < [[self subviews] count]; i ++){
-            id j = [[self subviews] objectAtIndex:i];
-            if ([j isKindOfClass:%c(UIStackView)]){
-                CGRect frame = [j frame];
-                frame.origin.x = 39.5; 
-                [j setFrame:frame];
-            }else {
-                [[self viewWithTag:666] removeFromSuperview];
-            }
-        }
+        // 移除所有已存在的地区标签
         [[self viewWithTag:666] removeFromSuperview];
+        
         AWEFeedCellViewController* rootVC = self.yy_viewController;
         AWEAwemeModel *model = rootVC.model;
         NSString *countryID = model.region;
-        UILabel *uploadLabel = [[UILabel alloc]initWithFrame:CGRectMake(0,2,39.5,20.5)];
-        // 使用文字显示地区而不是国旗emoji
-        uploadLabel.text = [NSString stringWithFormat:@"%@",countryID];
-        uploadLabel.tag = 666;
-        [uploadLabel setTextColor: [UIColor whiteColor]];
-        [uploadLabel sizeToFit];
-        [self addSubview:uploadLabel];
+        
+        // 只有当countryID不为空且不是问号时才显示
+        if (countryID && countryID.length > 0 && ![countryID isEqualToString:@"?"]) {
+            UILabel *uploadLabel = [[UILabel alloc]initWithFrame:CGRectMake(0,2,39.5,20.5)];
+            // 使用文字显示地区而不是国旗emoji
+            uploadLabel.text = [NSString stringWithFormat:@"%@",countryID];
+            uploadLabel.tag = 666;
+            [uploadLabel setTextColor: [UIColor whiteColor]];
+            [uploadLabel sizeToFit];
+            [self addSubview:uploadLabel];
+        }
     }
 }
 %end
