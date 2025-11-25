@@ -1114,7 +1114,7 @@ static BOOL isAuthenticationShowed = FALSE;
         NSString *countryID = model.region;
         UILabel *uploadLabel = [[UILabel alloc]initWithFrame:CGRectMake(0,2,39.5,20.5)];
         // 使用文字显示地区而不是国旗emoji
-        uploadLabel.text = [NSString stringWithFormat:@"%@ •",countryID];
+        uploadLabel.text = [NSString stringWithFormat:@"%@",countryID];
         uploadLabel.tag = 666;
         [uploadLabel setTextColor: [UIColor whiteColor]];
         [uploadLabel sizeToFit];
