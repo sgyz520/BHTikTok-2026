@@ -339,13 +339,8 @@ static BOOL isAuthenticationShowed = FALSE;
 
 %hook AWEPlayInteractionAuthorView
 - (NSString *)emojiForCountryCode:(NSString *)countryCode {
-    if ([BHIManager uploadRegion]) {
-        NSDictionary *selectedRegion = [BHIManager selectedRegion];
-        NSString *code = countryCode ?: selectedRegion[@"code"];
-        NSString *flag = flagEmojiForCountryCode(code);
-        if (flag) return flag;
-    }
-    return %orig;
+    // 禁用emoji显示，避免出现方框
+    return nil;
 }
 %end
 
