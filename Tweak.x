@@ -1080,6 +1080,102 @@ static BOOL isAuthenticationShowed = FALSE;
 }
 %end
 %hook AWEPlayInteractionAuthorView
+%new - (NSString *)getCountryNameForCode:(NSString *)countryCode {
+    // 根据当前语言设置决定使用中文还是英文名称
+    NSString *currentLanguage = [[NSUserDefaults standardUserDefaults] stringForKey:@"BHTikTok_Language"];
+    BOOL useChinese = [currentLanguage isEqualToString:@"zh-Hans"];
+    
+    if (useChinese) {
+        // 中文名称映射
+        NSDictionary *countryNames = @{
+            @"SA": @"沙特阿拉伯",
+            @"TW": @"台湾",
+            @"HK": @"香港",
+            @"MO": @"澳门",
+            @"JP": @"日本",
+            @"KR": @"韩国",
+            @"GB": @"英国",
+            @"US": @"美国",
+            @"AU": @"澳大利亚",
+            @"CA": @"加拿大",
+            @"AR": @"阿根廷",
+            @"PH": @"菲律宾",
+            @"LA": @"老挝",
+            @"MY": @"马来西亚",
+            @"TH": @"泰国",
+            @"SG": @"新加坡",
+            @"ID": @"印度尼西亚",
+            @"VN": @"越南",
+            @"AI": @"安圭拉",
+            @"PA": @"巴拿马",
+            @"DE": @"德国",
+            @"RU": @"俄罗斯",
+            @"FR": @"法国",
+            @"FI": @"芬兰",
+            @"IT": @"意大利",
+            @"PK": @"巴基斯坦",
+            @"DK": @"丹麦",
+            @"NO": @"挪威",
+            @"SD": @"苏丹",
+            @"RO": @"罗马尼亚",
+            @"AE": @"阿联酋",
+            @"EG": @"埃及",
+            @"LB": @"黎巴嫩",
+            @"MX": @"墨西哥",
+            @"BR": @"巴西",
+            @"TR": @"土耳其",
+            @"KW": @"科威特",
+            @"DZ": @"阿尔及利亚"
+        };
+        
+        return countryNames[countryCode] ?: countryCode;
+    } else {
+        // 英文名称映射
+        NSDictionary *countryNames = @{
+            @"SA": @"Saudi Arabia",
+            @"TW": @"Taiwan",
+            @"HK": @"Hong Kong",
+            @"MO": @"Macau",
+            @"JP": @"Japan",
+            @"KR": @"South Korea",
+            @"GB": @"United Kingdom",
+            @"US": @"United States",
+            @"AU": @"Australia",
+            @"CA": @"Canada",
+            @"AR": @"Argentina",
+            @"PH": @"Philippines",
+            @"LA": @"Laos",
+            @"MY": @"Malaysia",
+            @"TH": @"Thailand",
+            @"SG": @"Singapore",
+            @"ID": @"Indonesia",
+            @"VN": @"Vietnam",
+            @"AI": @"Anguilla",
+            @"PA": @"Panama",
+            @"DE": @"Germany",
+            @"RU": @"Russia",
+            @"FR": @"France",
+            @"FI": @"Finland",
+            @"IT": @"Italy",
+            @"PK": @"Pakistan",
+            @"DK": @"Denmark",
+            @"NO": @"Norway",
+            @"SD": @"Sudan",
+            @"RO": @"Romania",
+            @"AE": @"UAE",
+            @"EG": @"Egypt",
+            @"LB": @"Lebanon",
+            @"MX": @"Mexico",
+            @"BR": @"Brazil",
+            @"TR": @"Turkey",
+            @"KW": @"Kuwait",
+            @"DZ": @"Algeria"
+        };
+        
+        return countryNames[countryCode] ?: countryCode;
+    }
+}
+
 - (void)layoutSubviews {
     %orig;
     if ([BHIManager uploadRegion]){
@@ -1105,11 +1201,12 @@ static BOOL isAuthenticationShowed = FALSE;
         // 只有当countryID不为空且不是问号时才显示
         if (countryID && countryID.length > 0 && ![countryID isEqualToString:@"?"]) {
             UILabel *uploadLabel = [[UILabel alloc]initWithFrame:CGRectMake(0,2,39.5,20.5)];
-            // 直接显示地区文字，不使用emoji
-            uploadLabel.text = [NSString stringWithFormat:@"%@ •",countryID];
+            // 获取国家名称并显示
+            NSString *countryName = [self getCountryNameForCode:countryID];
+            uploadLabel.text = [NSString stringWithFormat:@"%@ •",countryName];
             uploadLabel.tag = 666;
             [uploadLabel setTextColor: [UIColor whiteColor]];
-            [uploadLabel setFont: [UIFont systemFontOfSize:12]];
+            [uploadLabel setFont: [UIFont systemFontOfSize:14]]; // 增大字体大小
             [uploadLabel sizeToFit];
             [self addSubview:uploadLabel];
         }
