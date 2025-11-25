@@ -1079,8 +1079,8 @@ static BOOL isAuthenticationShowed = FALSE;
     return %orig;
 }
 %end
-%hook AWEPlayInteractionAuthorView
-%new - (NSString *)getCountryNameForCode:(NSString *)countryCode {
+// 全局函数：根据国家代码获取国家名称
+static NSString *getCountryNameForCode(NSString *countryCode) {
     // 根据当前语言设置决定使用中文还是英文名称
     NSString *currentLanguage = [[NSUserDefaults standardUserDefaults] stringForKey:@"BHTikTok_Language"];
     BOOL useChinese = [currentLanguage isEqualToString:@"zh-Hans"];
@@ -1176,6 +1176,8 @@ static BOOL isAuthenticationShowed = FALSE;
     }
 }
 
+%hook AWEPlayInteractionAuthorView
+
 - (void)layoutSubviews {
     %orig;
     if ([BHIManager uploadRegion]){
@@ -1202,7 +1204,7 @@ static BOOL isAuthenticationShowed = FALSE;
         if (countryID && countryID.length > 0 && ![countryID isEqualToString:@"?"]) {
             UILabel *uploadLabel = [[UILabel alloc]initWithFrame:CGRectMake(0,2,39.5,20.5)];
             // 获取国家名称并显示
-            NSString *countryName = [self getCountryNameForCode:countryID];
+            NSString *countryName = getCountryNameForCode(countryID);
             uploadLabel.text = [NSString stringWithFormat:@"%@ •",countryName];
             uploadLabel.tag = 666;
             [uploadLabel setTextColor: [UIColor whiteColor]];
