@@ -81,3 +81,9 @@
 "Please restart the app to apply the changes." = "请重启应用以应用更改。";
 "Chinese Language" = "中文语言";
 "Change app language to Chinese" = "将应用语言更改为中文";
+"Upload Region Vertical Offset" = "属地标签垂直偏移";
+"FEATURE_UPLOAD_REGION_VERTICAL_OFFSET" = "调整IP属地标签的垂直位置";
+"Upload Region Label Color" = "属地标签颜色";
+"FEATURE_UPLOAD_REGION_LABEL_COLOR" = "自定义IP属地标签的颜色";
+"Upload Region Random Gradient" = "属地标签随机渐变";
+"FEATURE_UPLOAD_REGION_RANDOM_GRADIENT" = "为IP属地标签应用随机渐变效果";

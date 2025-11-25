@@ -2,6 +2,64 @@
 #import "TikTokHeaders.h"
 
 @implementation BHIManager
+
+static NSCache *locationCache = nil;
+static dispatch_once_t cacheToken;
+
++ (void)initializeLocationCache {
+    dispatch_once(&cacheToken, ^{
+        locationCache = [[NSCache alloc] init];
+        locationCache.name = @"com.bhtiktok.location.cache";
+        locationCache.countLimit = 1000;
+        locationCache.totalCostLimit = 1024 * 1024; // 1MB
+    });
+}
+
++ (NSDictionary *)getCachedLocationInfo:(NSString *)cacheKey {
+    if (!locationCache) {
+        [self initializeLocationCache];
+    }
+    
+    // 先检查内存缓存
+    NSDictionary *cachedData = [locationCache objectForKey:cacheKey];
+    if (cachedData) {
+        return cachedData;
+    }
+    
+    // 再检查磁盘缓存
+    NSString *cachesDir = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject];
+    NSString *locationCacheDir = [cachesDir stringByAppendingPathComponent:@"BHTikTokLocationCache"];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    
+    if (![fileManager fileExistsAtPath:locationCacheDir]) {
+        [fileManager createDirectoryAtPath:locationCacheDir withIntermediateDirectories:YES attributes:nil error:nil];
+    }
+    
+    NSString *cacheFilePath = [locationCacheDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.plist", cacheKey]];
+    if ([fileManager fileExistsAtPath:cacheFilePath]) {
+        cachedData = [NSDictionary dictionaryWithContentsOfFile:cacheFilePath];
+        if (cachedData) {
+            [locationCache setObject:cachedData forKey:cacheKey];
+        }
+    }
+    
+    return cachedData;
+}
+
++ (void)saveLocationInfoToCache:(NSString *)cacheKey locationInfo:(NSDictionary *)locationInfo {
+    if (!locationCache) {
+        [self initializeLocationCache];
+    }
+    
+    // 保存到内存缓存
+    [locationCache setObject:locationInfo forKey:cacheKey];
+    
+    // 保存到磁盘缓存
+    NSString *cachesDir = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject];
+    NSString *locationCacheDir = [cachesDir stringByAppendingPathComponent:@"BHTikTokLocationCache"];
+    NSString *cacheFilePath = [locationCacheDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.plist", cacheKey]];
+    [locationInfo writeToFile:cacheFilePath atomically:YES];
+}
 + (BOOL)hideAds {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_ads"];
 }
@@ -19,6 +77,42 @@
 }
 + (BOOL)uploadRegion {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"upload_region"];
+}
++ (CGFloat)uploadRegionVerticalOffset {
+    NSString *offsetValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"upload_region_vertical_offset"];
+    if (offsetValue.length > 0) {
+        return [offsetValue floatValue];
+    }
+    return 0.0; // 默认不偏移
+}
++ (NSString *)uploadRegionLabelColor {
+    NSString *colorHex = [[NSUserDefaults standardUserDefaults] objectForKey:@"upload_region_label_color"];
+    return colorHex.length > 0 ? colorHex : @"FFFFFF"; // 默认白色
+}
++ (BOOL)uploadRegionRandomGradient {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"upload_region_random_gradient"];
+}
++ (BOOL)multiLevelLocation {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"multi_level_location"];
+}
++ (void)clearLocationCache {
+    // 清理内存缓存
+    if (locationCache) {
+        [locationCache removeAllObjects];
+    }
+    
+    // 清理磁盘缓存
+    NSString *cachesDir = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject];
+    NSString *locationCacheDir = [cachesDir stringByAppendingPathComponent:@"BHTikTokLocationCache"];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    
+    if ([fileManager fileExistsAtPath:locationCacheDir]) {
+        NSError *error = nil;
+        [fileManager removeItemAtPath:locationCacheDir error:&error];
+        if (error) {
+            NSLog(@"[BHTikTok] Failed to clear location cache: %@", error.localizedDescription);
+        }
+    }
 }
 + (BOOL)autoPlay {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"auto_play"];

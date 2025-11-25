@@ -96,7 +96,7 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     switch (section) {
         case 0: // Feed section
-            return 15;
+            return 18;
         case 1: // Profile section
             return 4;
         case 2: // Confirm section
@@ -181,6 +181,82 @@
                 return [self createSwitchCellWithTitle:[BHIManager L:@"Upload Region"]
                                                 Detail:[BHIManager L:@"FEATURE_UPLOAD_REGION"]
                                                    Key:@"upload_region"];
+            case 15: {
+                UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
+                
+                UILabel *offsetLabel = [[UILabel alloc] init];
+                offsetLabel.text = [BHIManager L:@"Upload Region Vertical Offset"];
+                offsetLabel.font = [UIFont systemFontOfSize:16];
+                offsetLabel.translatesAutoresizingMaskIntoConstraints = NO;
+                [cell.contentView addSubview:offsetLabel];
+                
+                UITextField *textField = [[UITextField alloc] init];
+                textField.placeholder = @"0.0";
+                textField.borderStyle = UITextBorderStyleRoundedRect;
+                textField.delegate = self;
+                textField.tag = 3;
+                textField.returnKeyType = UIReturnKeyDone;
+                textField.translatesAutoresizingMaskIntoConstraints = NO;
+                [cell.contentView addSubview:textField];
+                
+                [NSLayoutConstraint activateConstraints:@[
+                    [offsetLabel.leadingAnchor constraintEqualToAnchor:cell.contentView.leadingAnchor constant:15],
+                    [offsetLabel.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
+                    [offsetLabel.widthAnchor constraintEqualToConstant:150],
+                    
+                    [textField.leadingAnchor constraintEqualToAnchor:offsetLabel.trailingAnchor constant:10],
+                    [textField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-15],
+                    [textField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
+                    [textField.heightAnchor constraintEqualToConstant:30]
+                ]];
+                NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                NSString *savedText = [defaults stringForKey:@"upload_region_vertical_offset"];
+                if (savedText) {
+                    textField.text = savedText;
+                }
+                
+                return cell;
+            }
+            case 16: {
+                UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
+                
+                UILabel *colorLabel = [[UILabel alloc] init];
+                colorLabel.text = [BHIManager L:@"Upload Region Label Color"];
+                colorLabel.font = [UIFont systemFontOfSize:16];
+                colorLabel.translatesAutoresizingMaskIntoConstraints = NO;
+                [cell.contentView addSubview:colorLabel];
+                
+                UITextField *textField = [[UITextField alloc] init];
+                textField.placeholder = @"FFFFFF";
+                textField.borderStyle = UITextBorderStyleRoundedRect;
+                textField.delegate = self;
+                textField.tag = 4;
+                textField.returnKeyType = UIReturnKeyDone;
+                textField.translatesAutoresizingMaskIntoConstraints = NO;
+                [cell.contentView addSubview:textField];
+                
+                [NSLayoutConstraint activateConstraints:@[
+                    [colorLabel.leadingAnchor constraintEqualToAnchor:cell.contentView.leadingAnchor constant:15],
+                    [colorLabel.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
+                    [colorLabel.widthAnchor constraintEqualToConstant:150],
+                    
+                    [textField.leadingAnchor constraintEqualToAnchor:colorLabel.trailingAnchor constant:10],
+                    [textField.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-15],
+                    [textField.centerYAnchor constraintEqualToAnchor:cell.contentView.centerYAnchor],
+                    [textField.heightAnchor constraintEqualToConstant:30]
+                ]];
+                NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                NSString *savedText = [defaults stringForKey:@"upload_region_label_color"];
+                if (savedText) {
+                    textField.text = savedText;
+                }
+                
+                return cell;
+            }
+            case 17:
+                return [self createSwitchCellWithTitle:[BHIManager L:@"Upload Region Random Gradient"]
+                                                Detail:[BHIManager L:@"FEATURE_UPLOAD_REGION_RANDOM_GRADIENT"]
+                                                   Key:@"upload_region_random_gradient"];
             default:
                 break;
         }
@@ -545,9 +621,15 @@
         NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
         [defaults setObject:textField.text forKey:@"follower_count"];
         [defaults synchronize];
+    } else if (textField.tag == 3){
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        [defaults setObject:textField.text forKey:@"upload_region_vertical_offset"];
+        [defaults synchronize];
+    } else if (textField.tag == 4){
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        [defaults setObject:textField.text forKey:@"upload_region_label_color"];
+        [defaults synchronize];
     }
-    
-    
 }
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
     [textField resignFirstResponder];

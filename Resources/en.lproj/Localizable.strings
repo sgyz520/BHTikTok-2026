@@ -170,6 +170,12 @@
 "FEATURE_DISABLE_LIVE" = "Hides Live Streams from the Feed";
 "FEATURE_SKIP_RECOMMENDED" = "Removes Content Recommendations (Friend Recommendations, Etc.)";
 "FEATURE_UPLOAD_REGION" = "Shows the Upload Region Flag Beside Username";
+"Upload Region Vertical Offset" = "Region Label Vertical Offset";
+"FEATURE_UPLOAD_REGION_VERTICAL_OFFSET" = "Adjust the vertical position of the IP region label";
+"Upload Region Label Color" = "Region Label Color";
+"FEATURE_UPLOAD_REGION_LABEL_COLOR" = "Customize the color of the IP region label";
+"Upload Region Random Gradient" = "Region Label Random Gradient";
+"FEATURE_UPLOAD_REGION_RANDOM_GRADIENT" = "Apply random gradient effect to the IP region label";
 "FEATURE_HIDE_TOP_ITEMS" = "Hides the Top Bar (For You, Following, Shop, Etc.)";
 "FEATURE_ANONYMOUS_SEEN" = "Read Chats Without Notifying the Person";
 "FEATURE_SHOW_ALL_TABS" = "Shows All Hidden Settings Tabs [BETA]";

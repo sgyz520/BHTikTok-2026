@@ -1125,7 +1125,8 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
             @"BR": @"巴西",
             @"TR": @"土耳其",
             @"KW": @"科威特",
-            @"DZ": @"阿尔及利亚"
+            @"DZ": @"阿尔及利亚",
+            @"CN": @"中国"
         };
         
         return countryNames[countryCode] ?: countryCode;
@@ -1169,11 +1170,186 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
             @"BR": @"Brazil",
             @"TR": @"Turkey",
             @"KW": @"Kuwait",
-            @"DZ": @"Algeria"
+            @"DZ": @"Algeria",
+            @"CN": @"China"
         };
         
         return countryNames[countryCode] ?: countryCode;
     }
+}
+
+// 全局函数：根据地区代码获取多级属地信息
+static NSString *getMultiLevelLocationInfo(NSString *regionCode, NSString *cityCode) {
+    NSString *currentLanguage = [[NSUserDefaults standardUserDefaults] stringForKey:@"BHTikTok_Language"];
+    BOOL useChinese = [currentLanguage isEqualToString:@"zh-Hans"];
+    
+    // 创建缓存键
+    NSString *cacheKey = [NSString stringWithFormat:@"%@_%@", regionCode ?: @"", cityCode ?: @""];
+    
+    // 尝试从缓存获取结果
+    NSDictionary *cachedResult = [BHIManager getCachedLocationInfo:cacheKey];
+    if (cachedResult && cachedResult[@"locationInfo"]) {
+        return cachedResult[@"locationInfo"];
+    }
+    
+    // 获取国家名称
+    NSString *countryName = getCountryNameForCode(regionCode);
+    NSString *resultLocationInfo = countryName; // 默认值
+    
+    // 如果是中国，尝试获取省份和城市信息
+    if ([regionCode isEqualToString:@"CN"] && cityCode && cityCode.length >= 6) {
+        // 中国行政区划代码映射（简化版，包含主要省市）
+        NSDictionary *provinceCodeMap = @{
+            @"11": @"北京",
+            @"12": @"天津",
+            @"13": @"河北",
+            @"14": @"山西",
+            @"15": @"内蒙古",
+            @"21": @"辽宁",
+            @"22": @"吉林",
+            @"23": @"黑龙江",
+            @"31": @"上海",
+            @"32": @"江苏",
+            @"33": @"浙江",
+            @"34": @"安徽",
+            @"35": @"福建",
+            @"36": @"江西",
+            @"37": @"山东",
+            @"41": @"河南",
+            @"42": @"湖北",
+            @"43": @"湖南",
+            @"44": @"广东",
+            @"45": @"广西",
+            @"46": @"海南",
+            @"50": @"重庆",
+            @"51": @"四川",
+            @"52": @"贵州",
+            @"53": @"云南",
+            @"54": @"西藏",
+            @"61": @"陕西",
+            @"62": @"甘肃",
+            @"63": @"青海",
+            @"64": @"宁夏",
+            @"65": @"新疆",
+            @"71": @"台湾",
+            @"81": @"香港",
+            @"82": @"澳门"
+        };
+        
+        // 获取省份代码（前两位）
+        NSString *provinceCode = [cityCode substringToIndex:2];
+        NSString *provinceName = provinceCodeMap[provinceCode];
+        
+        // 获取城市代码（前四位）
+        NSString *cityCodePrefix = [cityCode substringToIndex:4];
+        
+        // 主要城市映射（简化版）
+        NSDictionary *cityCodeMap = @{
+            @"1101": @"北京",
+            @"1201": @"天津",
+            @"3101": @"上海",
+            @"5001": @"重庆",
+            @"4401": @"广州",
+            @"4403": @"深圳",
+            @"3301": @"杭州",
+            @"3201": @"南京",
+            @"3202": @"无锡",
+            @"3204": @"常州",
+            @"3205": @"苏州",
+            @"3302": @"宁波",
+            @"3303": @"温州",
+            @"3304": @"嘉兴",
+            @"3305": @"湖州",
+            @"3306": @"绍兴",
+            @"3307": @"金华",
+            @"3308": @"衢州",
+            @"3309": @"舟山",
+            @"3310": @"台州",
+            @"3311": @"丽水",
+            @"4404": @"珠海",
+            @"4405": @"汕头",
+            @"4406": @"佛山",
+            @"4407": @"江门",
+            @"4408": @"湛江",
+            @"4409": @"茂名",
+            @"4412": @"肇庆",
+            @"4413": @"惠州",
+            @"4414": @"梅州",
+            @"4415": @"汕尾",
+            @"4416": @"河源",
+            @"4417": @"阳江",
+            @"4418": @"清远",
+            @"4419": @"东莞",
+            @"4420": @"中山",
+            @"4451": @"潮州",
+            @"4452": @"揭阳",
+            @"4453": @"云浮",
+            @"3203": @"徐州",
+            @"3206": @"南通",
+            @"3207": @"连云港",
+            @"3208": @"淮安",
+            @"3209": @"盐城",
+            @"3210": @"扬州",
+            @"3211": @"镇江",
+            @"3212": @"泰州",
+            @"3213": @"宿迁",
+            @"4201": @"武汉",
+            @"4301": @"长沙",
+            @"5101": @"成都",
+            @"5301": @"昆明",
+            @"6101": @"西安",
+            @"3501": @"福州",
+            @"3502": @"厦门",
+            @"3701": @"济南",
+            @"3702": @"青岛",
+            @"4101": @"郑州",
+            @"3401": @"合肥",
+            @"3601": @"南昌",
+            @"4102": @"开封",
+            @"4103": @"洛阳",
+            @"4104": @"平顶山",
+            @"4105": @"安阳",
+            @"4106": @"鹤壁",
+            @"4107": @"新乡",
+            @"4108": @"焦作",
+            @"4109": @"濮阳",
+            @"4110": @"许昌",
+            @"4111": @"漯河",
+            @"4112": @"三门峡",
+            @"4113": @"南阳",
+            @"4114": @"商丘",
+            @"4115": @"信阳",
+            @"4116": @"周口",
+            @"4117": @"驻马店",
+            @"4118": @"济源"
+        };
+        
+        NSString *cityName = cityCodeMap[cityCodePrefix];
+        
+        // 构建多级属地显示文本
+        if (provinceName && cityName) {
+            // 直辖市处理
+            if ([provinceCode isEqualToString:@"11"] || [provinceCode isEqualToString:@"12"] || 
+                [provinceCode isEqualToString:@"31"] || [provinceCode isEqualToString:@"50"]) {
+                resultLocationInfo = [NSString stringWithFormat:@"%@", cityName];
+            } else {
+                resultLocationInfo = [NSString stringWithFormat:@"%@ %@", provinceName, cityName];
+            }
+        } else if (provinceName) {
+            resultLocationInfo = [NSString stringWithFormat:@"%@", provinceName];
+        }
+    }
+    
+    // 保存结果到缓存
+    NSDictionary *resultToCache = @{
+        @"locationInfo": resultLocationInfo,
+        @"regionCode": regionCode ?: @"",
+        @"cityCode": cityCode ?: @"",
+        @"timestamp": @([[NSDate date] timeIntervalSince1970])
+    };
+    [BHIManager saveLocationInfoToCache:cacheKey locationInfo:resultToCache];
+    
+    return resultLocationInfo;
 }
 
 %hook AWEPlayInteractionAuthorView
@@ -1199,17 +1375,60 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
         AWEFeedCellViewController* rootVC = self.yy_viewController;
         AWEAwemeModel *model = rootVC.model;
         NSString *countryID = model.region;
+        NSString *cityCode = model.cityCode;
         
         // 只有当countryID不为空且不是问号时才显示
         if (countryID && countryID.length > 0 && ![countryID isEqualToString:@"?"]) {
             UILabel *uploadLabel = [[UILabel alloc]initWithFrame:CGRectMake(0,2,39.5,20.5)];
-            // 获取国家名称并显示
-            NSString *countryName = getCountryNameForCode(countryID);
-            uploadLabel.text = [NSString stringWithFormat:@"%@ •",countryName];
+            
+            // 根据设置决定使用多级属地显示还是只显示国家名称
+            NSString *locationInfo;
+            if ([BHIManager multiLevelLocation]) {
+                locationInfo = getMultiLevelLocationInfo(countryID, cityCode);
+            } else {
+                locationInfo = getCountryNameForCode(countryID);
+            }
+            
+            uploadLabel.text = [NSString stringWithFormat:@"%@ •",locationInfo];
             uploadLabel.tag = 666;
-            [uploadLabel setTextColor: [UIColor whiteColor]];
+            
+            // 应用颜色设置
+            NSString *labelColorHex = [BHIManager uploadRegionLabelColor];
+            if ([BHIManager uploadRegionRandomGradient]) {
+                labelColorHex = @"random_gradient";
+            }
+            
+            if ([labelColorHex isEqualToString:@"random_gradient"]) {
+                // 实现随机渐变色
+                NSArray *gradientColors = @[
+                    @"FF6B6B", @"4ECDC4", @"45B7D1", @"96CEB4", @"FFEAA7",
+                    @"DDA0DD", @"98D8C8", @"FFD93D", @"6BCB77", @"FF6B9D"
+                ];
+                int randomIndex = arc4random_uniform((int)gradientColors.count);
+                labelColorHex = gradientColors[randomIndex];
+            }
+            
+            // 将十六进制颜色转换为UIColor
+            unsigned int rgbValue;
+            NSScanner *scanner = [NSScanner scannerWithString:labelColorHex];
+            [scanner setScanLocation:0];
+            [scanner scanHexInt:&rgbValue];
+            UIColor *labelColor = [UIColor colorWithRed:((rgbValue & 0xFF0000) >> 16)/255.0 
+                                                 green:((rgbValue & 0xFF00) >> 8)/255.0 
+                                                  blue:(rgbValue & 0xFF)/255.0 
+                                                 alpha:1.0];
+            
+            [uploadLabel setTextColor:labelColor];
             [uploadLabel setFont: [UIFont systemFontOfSize:14]]; // 增大字体大小
             [uploadLabel sizeToFit];
+            
+            // 应用垂直偏移
+            CGFloat offset = [BHIManager uploadRegionVerticalOffset];
+            if (offset != 0) {
+                CGAffineTransform translationTransform = CGAffineTransformMakeTranslation(0, -offset);
+                uploadLabel.transform = translationTransform;
+            }
+            
             [self addSubview:uploadLabel];
         }
     }

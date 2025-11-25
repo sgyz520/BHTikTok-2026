@@ -8,6 +8,11 @@
 + (BOOL)removeWatermark;
 + (BOOL)hideElementButton;
 + (BOOL)uploadRegion;
++ (CGFloat)uploadRegionVerticalOffset;
++ (NSString *)uploadRegionLabelColor;
++ (BOOL)uploadRegionRandomGradient;
++ (BOOL)multiLevelLocation;
++ (void)clearLocationCache;
 + (BOOL)autoPlay;
 + (BOOL)stopPlay;
 + (BOOL)progressBar;
