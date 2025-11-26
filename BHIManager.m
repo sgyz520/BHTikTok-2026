@@ -146,7 +146,42 @@ static dispatch_once_t cacheToken;
 }
 
 + (NSString *)L:(NSString *)key {
-    // 直接使用系统默认语言，不再检查用户设置的语言
+    // 获取用户设置的语言
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *savedLanguage = [defaults objectForKey:@"BHTikTok_Language"];
+    
+    // 如果没有保存的语言设置，使用系统默认语言
+    if (!savedLanguage) {
+        NSArray *languages = [defaults objectForKey:@"AppleLanguages"];
+        NSString *systemLanguage = languages.firstObject;
+        
+        // 检查系统语言是否为中文
+        if ([systemLanguage hasPrefix:@"zh"]) {
+            savedLanguage = @"zh-Hans";
+        } else {
+            savedLanguage = @"en";
+        }
+    }
+    
+    // 根据语言设置获取对应的bundle路径
+    NSString *path = [[NSBundle mainBundle] pathForResource:savedLanguage ofType:@"lproj"];
+    if (path) {
+        NSBundle *languageBundle = [NSBundle bundleWithPath:path];
+        NSString *localizedString = [languageBundle localizedStringForKey:key value:nil table:nil];
+        // 如果在指定语言中找不到翻译，回退到英文
+        if (localizedString && ![localizedString isEqualToString:key]) {
+            return localizedString;
+        }
+    }
+    
+    // 回退到英文
+    NSString *englishPath = [[NSBundle mainBundle] pathForResource:@"en" ofType:@"lproj"];
+    if (englishPath) {
+        NSBundle *englishBundle = [NSBundle bundleWithPath:englishPath];
+        return [englishBundle localizedStringForKey:key value:nil table:nil];
+    }
+    
+    // 最后的回退，返回key本身
     return NSLocalizedString(key, nil);
 }
 + (BOOL)likeConfirmation {

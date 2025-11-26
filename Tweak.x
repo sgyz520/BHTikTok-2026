@@ -854,54 +854,23 @@ static BOOL isAuthenticationShowed = FALSE;
 %hook AWEPlayVideoPlayerController // auto play next video and stop looping video
 - (void)playerWillLoopPlaying:(id)arg1 {
     if ([BHIManager autoPlay]) {
-        // 尝试多种方式获取AWENewFeedTableViewController实例
-        AWENewFeedTableViewController *newFeedVC = nil;
-        
-        // 方式1：直接从container的parentViewController获取
         if ([self.container.parentViewController isKindOfClass:%c(AWENewFeedTableViewController)]) {
-            newFeedVC = (AWENewFeedTableViewController *)self.container.parentViewController;
-        }
-        // 方式2：从container的viewController层级中查找
-        else {
-            UIViewController *currentVC = self.container;
-            while (currentVC && ![currentVC isKindOfClass:%c(AWENewFeedTableViewController)]) {
-                currentVC = currentVC.parentViewController;
-            }
-            if ([currentVC isKindOfClass:%c(AWENewFeedTableViewController)]) {
-                newFeedVC = (AWENewFeedTableViewController *)currentVC;
-            }
-        }
-        
-        // 方式3：尝试使用topMostController获取根视图控制器
-        if (!newFeedVC) {
-            UIViewController *topVC = topMostController();
-            while (topVC && ![topVC isKindOfClass:%c(AWENewFeedTableViewController)]) {
-                topVC = topVC.parentViewController;
-            }
-            if ([topVC isKindOfClass:%c(AWENewFeedTableViewController)]) {
-                newFeedVC = (AWENewFeedTableViewController *)topVC;
-            }
-        }
-        
-        // 如果找到了AWENewFeedTableViewController实例，调用scrollToNextVideo方法
-        if (newFeedVC) {
-            // 检查scrollToNextVideo方法是否存在
-            if ([newFeedVC respondsToSelector:@selector(scrollToNextVideo)]) {
-                [newFeedVC scrollToNextVideo];
-                return;
-            }
-            // 如果scrollToNextVideo方法不存在，尝试其他可能的方法名
-            else if ([newFeedVC respondsToSelector:@selector(scrollToNext)]) {
-                [newFeedVC performSelector:@selector(scrollToNext)];
-                return;
-            }
-            else if ([newFeedVC respondsToSelector:@selector(nextVideo)]) {
-                [newFeedVC performSelector:@selector(nextVideo)];
-                return;
-            }
+            [((AWENewFeedTableViewController *)self.container.parentViewController) scrollToNextVideo];
+            return;
         }
     }
     %orig;
+}
+- (void)containerDidFullyDisplayWithReason:(NSInteger)arg1 {
+    if ([[[self container] parentViewController] isKindOfClass:%c(AWENewFeedTableViewController)] && [BHIManager skipRecommendations]) {
+        AWENewFeedTableViewController *rootVC = [[self container] parentViewController];
+        AWEAwemeModel *currentModel = [rootVC currentAweme];
+        if ([currentModel isUserRecommendBigCard]) {
+            [rootVC scrollToNextVideo];
+        }
+    }else {
+        %orig;
+    }
 }
 - (BOOL)loop {
     if ([BHIManager stopPlay]) {
@@ -1097,19 +1066,6 @@ static BOOL isAuthenticationShowed = FALSE;
     }
 
     return %orig;
-}
-%end
-%hook AWEPlayVideoPlayerController
-- (void)containerDidFullyDisplayWithReason:(NSInteger)arg1 {
-    if ([[[self container] parentViewController] isKindOfClass:%c(AWENewFeedTableViewController)] && [BHIManager skipRecommendations]) {
-        AWENewFeedTableViewController *rootVC = [[self container] parentViewController];
-        AWEAwemeModel *currentModel = [rootVC currentAweme];
-        if ([currentModel isUserRecommendBigCard]) {
-            [rootVC scrollToNextVideo];
-        }
-    }else {
-        %orig;
-    }
 }
 %end
 %hook AWEProfileEditTextViewController
