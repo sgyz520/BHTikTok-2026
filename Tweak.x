@@ -861,6 +861,9 @@ static BOOL isAuthenticationShowed = FALSE;
     }
     %orig;
 }
+- (void)playerDidPlayToEnd:(id)arg1 {
+    %orig;
+}
 - (void)containerDidFullyDisplayWithReason:(NSInteger)arg1 {
     if ([[[self container] parentViewController] isKindOfClass:%c(AWENewFeedTableViewController)] && [BHIManager skipRecommendations]) {
         AWENewFeedTableViewController *rootVC = [[self container] parentViewController];
@@ -876,12 +879,17 @@ static BOOL isAuthenticationShowed = FALSE;
     if ([BHIManager stopPlay]) {
         return 0;
     }
+    if ([BHIManager autoPlay]) {
+        return 0;
+    }
     return %orig; 
 }
 - (void)setLoop:(BOOL)arg1 {
     if ([BHIManager stopPlay]) {
         %orig(0);
-    }else {
+    } else if ([BHIManager autoPlay]) {
+        %orig(0);
+    } else {
         %orig;
     }
 }
