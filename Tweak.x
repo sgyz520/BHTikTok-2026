@@ -875,24 +875,7 @@ static BOOL isAuthenticationShowed = FALSE;
         %orig;
     }
 }
-- (BOOL)loop {
-    if ([BHIManager stopPlay]) {
-        return 0;
-    }
-    if ([BHIManager autoPlay]) {
-        return 0;
-    }
-    return %orig; 
-}
-- (void)setLoop:(BOOL)arg1 {
-    if ([BHIManager stopPlay]) {
-        %orig(0);
-    } else if ([BHIManager autoPlay]) {
-        %orig(0);
-    } else {
-        %orig;
-    }
-}
+
 %end
 
 %hook AWEMaskInfoModel // Disable Unsensitive Content
