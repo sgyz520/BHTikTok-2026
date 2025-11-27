@@ -861,6 +861,17 @@ static BOOL isAuthenticationShowed = FALSE;
     }
     %orig;
 }
+
+// 添加新的方法来处理视频播放结束时的自动播放
+- (void)playerDidPlayToEnd:(id)arg1 {
+    if ([BHIManager autoPlay]) {
+        if ([self.container.parentViewController isKindOfClass:%c(AWENewFeedTableViewController)]) {
+            [((AWENewFeedTableViewController *)self.container.parentViewController) scrollToNextVideo];
+            return;
+        }
+    }
+    %orig;
+}
 - (void)containerDidFullyDisplayWithReason:(NSInteger)arg1 {
     if ([[[self container] parentViewController] isKindOfClass:%c(AWENewFeedTableViewController)] && [BHIManager skipRecommendations]) {
         AWENewFeedTableViewController *rootVC = [[self container] parentViewController];
@@ -1260,7 +1271,8 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 %property (nonatomic, retain) UIProgressView *progressView;
 - (void)configWithModel:(id)model {
     %orig;
-    self.elementsHidden = false;
+    // 移除这行代码以保持隐藏状态在视频切换时不被重置
+    // self.elementsHidden = false;
     if ([BHIManager downloadButton]){
         [self addDownloadButton];
     }
@@ -1270,7 +1282,8 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 }
 - (void)configureWithModel:(id)model {
     %orig;
-    self.elementsHidden = false;
+    // 移除这行代码以保持隐藏状态在视频切换时不被重置
+    // self.elementsHidden = false;
     if ([BHIManager downloadButton]){
         [self addDownloadButton];
     }
@@ -1645,7 +1658,8 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 %property (nonatomic, retain) NSString *fileextension;
 - (void)configWithModel:(id)model {
     %orig;
-    self.elementsHidden = false;
+    // 移除这行代码以保持隐藏状态在视频切换时不被重置
+    // self.elementsHidden = false;
     if ([BHIManager downloadButton]){
         [self addDownloadButton];
     }
@@ -1658,7 +1672,8 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 }
 - (void)configureWithModel:(id)model {
     %orig;
-    self.elementsHidden = false;
+    // 移除这行代码以保持隐藏状态在视频切换时不被重置
+    // self.elementsHidden = false;
     if ([BHIManager downloadButton]){
         [self addDownloadButton];
     }
