@@ -2,6 +2,9 @@
 
 NSArray *jailbreakPaths;
 
+// 全局变量来跟踪隐藏状态，确保在视频切换时保持状态
+static BOOL globalElementsHidden = NO;
+
 static void showAlert(NSString *title, NSString *message, NSString *okTitle, NSString *cancelTitle, void (^okHandler)(void)) {
   Class alertViewClass = NSClassFromString(@"AWEUIAlertView");
   if (alertViewClass && [alertViewClass respondsToSelector:@selector(showAlertWithTitle:description:image:actionButtonTitle:cancelButtonTitle:actionBlock:cancelBlock:)]) {
@@ -865,8 +868,56 @@ static BOOL isAuthenticationShowed = FALSE;
 // 添加新的方法来处理视频播放结束时的自动播放
 - (void)playerDidPlayToEnd:(id)arg1 {
     if ([BHIManager autoPlay]) {
-        if ([self.container.parentViewController isKindOfClass:%c(AWENewFeedTableViewController)]) {
-            [((AWENewFeedTableViewController *)self.container.parentViewController) scrollToNextVideo];
+        // 尝试多种方式获取父控制器
+        UIViewController *parentVC = nil;
+        
+        // 方式1: 通过container.parentViewController
+        if (self.container && self.container.parentViewController) {
+            parentVC = self.container.parentViewController;
+        }
+        
+        // 方式2: 通过container的下一个响应者
+        if (!parentVC && self.container) {
+            UIResponder *nextResponder = self.container.nextResponder;
+            while (nextResponder) {
+                if ([nextResponder isKindOfClass:[UIViewController class]]) {
+                    parentVC = (UIViewController *)nextResponder;
+                    break;
+                }
+                nextResponder = nextResponder.nextResponder;
+            }
+        }
+        
+        // 方式3: 通过当前窗口的根控制器
+        if (!parentVC) {
+            UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
+            if (keyWindow && keyWindow.rootViewController) {
+                UIViewController *rootVC = keyWindow.rootViewController;
+                // 查找导航控制器中的视图控制器
+                if ([rootVC isKindOfClass:[UINavigationController class]]) {
+                    UINavigationController *navController = (UINavigationController *)rootVC;
+                    if (navController.viewControllers.count > 0) {
+                        parentVC = navController.viewControllers.lastObject;
+                    }
+                } else {
+                    parentVC = rootVC;
+                }
+                
+                // 查找子视图控制器
+                if (parentVC.childViewControllers.count > 0) {
+                    for (UIViewController *childVC in parentVC.childViewControllers) {
+                        if ([childVC isKindOfClass:%c(AWENewFeedTableViewController)]) {
+                            parentVC = childVC;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 检查是否找到了正确的控制器并调用scrollToNextVideo
+        if (parentVC && [parentVC isKindOfClass:%c(AWENewFeedTableViewController)]) {
+            [(AWENewFeedTableViewController *)parentVC scrollToNextVideo];
             return;
         }
     }
@@ -1278,6 +1329,14 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     }
     if ([BHIManager hideElementButton]) {
         [self addHideElementButton];
+        // 如果全局隐藏状态为true，则应用隐藏
+        if (globalElementsHidden) {
+            AWEAwemeBaseViewController *rootVC = self.viewController;
+            if ([rootVC.interactionController isKindOfClass:%c(TTKFeedInteractionLegacyMainContainerElement)]) {
+                TTKFeedInteractionLegacyMainContainerElement *interactionController = rootVC.interactionController;
+                [interactionController hideAllElements:true exceptArray:nil];
+            }
+        }
     }
 }
 - (void)configureWithModel:(id)model {
@@ -1289,6 +1348,14 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     }
     if ([BHIManager hideElementButton]) {
         [self addHideElementButton];
+        // 如果全局隐藏状态为true，则应用隐藏
+        if (globalElementsHidden) {
+            AWEAwemeBaseViewController *rootVC = self.viewController;
+            if ([rootVC.interactionController isKindOfClass:%c(TTKFeedInteractionLegacyMainContainerElement)]) {
+                TTKFeedInteractionLegacyMainContainerElement *interactionController = rootVC.interactionController;
+                [interactionController hideAllElements:true exceptArray:nil];
+            }
+        }
     }
 }
 %new - (void)addDownloadButton {
@@ -1568,7 +1635,7 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     [hideElementButton setTag:999];
     [hideElementButton setTranslatesAutoresizingMaskIntoConstraints:false];
     [hideElementButton addTarget:self action:@selector(hideElementButtonHandler:) forControlEvents:UIControlEventTouchUpInside];
-    if (self.elementsHidden) {
+    if (globalElementsHidden) {
         [hideElementButton setImage:[UIImage systemImageNamed:@"eye"] forState:UIControlStateNormal];
     } else {
         [hideElementButton setImage:[UIImage systemImageNamed:@"eye.slash"] forState:UIControlStateNormal];
@@ -1590,12 +1657,12 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     AWEAwemeBaseViewController *rootVC = self.viewController;
     if ([rootVC.interactionController isKindOfClass:%c(TTKFeedInteractionLegacyMainContainerElement)]) {
         TTKFeedInteractionLegacyMainContainerElement *interactionController = rootVC.interactionController;
-        if (self.elementsHidden) {
-            self.elementsHidden = false;
+        if (globalElementsHidden) {
+            globalElementsHidden = NO;
             [interactionController hideAllElements:false exceptArray:nil];
             [sender setImage:[UIImage systemImageNamed:@"eye.slash"] forState:UIControlStateNormal];
         } else {
-            self.elementsHidden = true;
+            globalElementsHidden = YES;
             [interactionController hideAllElements:true exceptArray:nil];
             [sender setImage:[UIImage systemImageNamed:@"eye"] forState:UIControlStateNormal];
         }
@@ -1665,6 +1732,14 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     }
     if ([BHIManager hideElementButton]) {
         [self addHideElementButton];
+        // 如果全局隐藏状态为true，则应用隐藏
+        if (globalElementsHidden) {
+            AWEAwemeBaseViewController *rootVC = self.viewController;
+            if ([rootVC.interactionController isKindOfClass:%c(TTKFeedInteractionLegacyMainContainerElement)]) {
+                TTKFeedInteractionLegacyMainContainerElement *interactionController = rootVC.interactionController;
+                [interactionController hideAllElements:true exceptArray:nil];
+            }
+        }
     }
     if ([BHIManager videoUploadDate] || [BHIManager uploadRegion]) {
         [self addVideoInfoLabels];
@@ -1679,6 +1754,14 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     }
     if ([BHIManager hideElementButton]) {
         [self addHideElementButton];
+        // 如果全局隐藏状态为true，则应用隐藏
+        if (globalElementsHidden) {
+            AWEAwemeBaseViewController *rootVC = self.viewController;
+            if ([rootVC.interactionController isKindOfClass:%c(TTKFeedInteractionLegacyMainContainerElement)]) {
+                TTKFeedInteractionLegacyMainContainerElement *interactionController = rootVC.interactionController;
+                [interactionController hideAllElements:true exceptArray:nil];
+            }
+        }
     }
     if ([BHIManager videoUploadDate] || [BHIManager uploadRegion]) {
         [self addVideoInfoLabels];
@@ -1818,7 +1901,7 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     [hideElementButton setTag:999];
     [hideElementButton setTranslatesAutoresizingMaskIntoConstraints:false];
     [hideElementButton addTarget:self action:@selector(hideElementButtonHandler:) forControlEvents:UIControlEventTouchUpInside];
-    if (self.elementsHidden) {
+    if (globalElementsHidden) {
         [hideElementButton setImage:[UIImage systemImageNamed:@"eye"] forState:UIControlStateNormal];
     } else {
         [hideElementButton setImage:[UIImage systemImageNamed:@"eye.slash"] forState:UIControlStateNormal];
@@ -1840,12 +1923,12 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     AWEAwemeBaseViewController *rootVC = self.viewController;
     if ([rootVC.interactionController isKindOfClass:%c(TTKFeedInteractionLegacyMainContainerElement)]) {
         TTKFeedInteractionLegacyMainContainerElement *interactionController = rootVC.interactionController;
-        if (self.elementsHidden) {
-            self.elementsHidden = false;
+        if (globalElementsHidden) {
+            globalElementsHidden = NO;
             [interactionController hideAllElements:false exceptArray:nil];
             [sender setImage:[UIImage systemImageNamed:@"eye.slash"] forState:UIControlStateNormal];
         } else {
-            self.elementsHidden = true;
+            globalElementsHidden = YES;
             [interactionController hideAllElements:true exceptArray:nil];
             [sender setImage:[UIImage systemImageNamed:@"eye"] forState:UIControlStateNormal];
         }
