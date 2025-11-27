@@ -1074,7 +1074,7 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     
     // 检查缓存
     NSString *cacheKey = [NSString stringWithFormat:@"country_%@", countryCode];
-    NSDictionary *cachedInfo = [BHIManager getLocationInfoFromCache:cacheKey];
+    NSDictionary *cachedInfo = [BHIManager getCachedLocationInfo:cacheKey];
     
     if (cachedInfo) {
         NSNumber *timestamp = cachedInfo[@"timestamp"];
