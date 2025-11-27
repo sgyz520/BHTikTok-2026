@@ -874,6 +874,10 @@ static BOOL isAuthenticationShowed = FALSE;
         // 方式1: 通过container.parentViewController
         if (self.container && self.container.parentViewController) {
             parentVC = self.container.parentViewController;
+            if ([parentVC isKindOfClass:%c(AWENewFeedTableViewController)]) {
+                [(AWENewFeedTableViewController *)parentVC scrollToNextVideo];
+                return;
+            }
         }
         
         // 方式2: 通过container的下一个响应者
@@ -881,8 +885,11 @@ static BOOL isAuthenticationShowed = FALSE;
             UIResponder *nextResponder = self.container.nextResponder;
             while (nextResponder) {
                 if ([nextResponder isKindOfClass:[UIViewController class]]) {
-                    parentVC = (UIViewController *)nextResponder;
-                    break;
+                    UIViewController *vc = (UIViewController *)nextResponder;
+                    if ([vc isKindOfClass:%c(AWENewFeedTableViewController)]) {
+                        [(AWENewFeedTableViewController *)vc scrollToNextVideo];
+                        return;
+                    }
                 }
                 nextResponder = nextResponder.nextResponder;
             }
@@ -893,6 +900,7 @@ static BOOL isAuthenticationShowed = FALSE;
             UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
             if (keyWindow && keyWindow.rootViewController) {
                 UIViewController *rootVC = keyWindow.rootViewController;
+                
                 // 查找导航控制器中的视图控制器
                 if ([rootVC isKindOfClass:[UINavigationController class]]) {
                     UINavigationController *navController = (UINavigationController *)rootVC;
@@ -903,25 +911,93 @@ static BOOL isAuthenticationShowed = FALSE;
                     parentVC = rootVC;
                 }
                 
+                // 检查当前控制器
+                if (parentVC && [parentVC isKindOfClass:%c(AWENewFeedTableViewController)]) {
+                    [(AWENewFeedTableViewController *)parentVC scrollToNextVideo];
+                    return;
+                }
+                
                 // 查找子视图控制器
-                if (parentVC.childViewControllers.count > 0) {
+                if (parentVC && parentVC.childViewControllers.count > 0) {
                     for (UIViewController *childVC in parentVC.childViewControllers) {
                         if ([childVC isKindOfClass:%c(AWENewFeedTableViewController)]) {
-                            parentVC = childVC;
-                            break;
+                            [(AWENewFeedTableViewController *)childVC scrollToNextVideo];
+                            return;
+                        }
+                    }
+                }
+                
+                // 查找呈现的视图控制器
+                if (parentVC && parentVC.presentedViewController) {
+                    UIViewController *presentedVC = parentVC.presentedViewController;
+                    if ([presentedVC isKindOfClass:%c(AWENewFeedTableViewController)]) {
+                        [(AWENewFeedTableViewController *)presentedVC scrollToNextVideo];
+                        return;
+                    }
+                    
+                    // 如果是导航控制器，检查其视图控制器
+                    if ([presentedVC isKindOfClass:[UINavigationController class]]) {
+                        UINavigationController *navController = (UINavigationController *)presentedVC;
+                        for (UIViewController *vc in navController.viewControllers) {
+                            if ([vc isKindOfClass:%c(AWENewFeedTableViewController)]) {
+                                [(AWENewFeedTableViewController *)vc scrollToNextVideo];
+                                return;
+                            }
                         }
                     }
                 }
             }
         }
         
-        // 检查是否找到了正确的控制器并调用scrollToNextVideo
-        if (parentVC && [parentVC isKindOfClass:%c(AWENewFeedTableViewController)]) {
-            [(AWENewFeedTableViewController *)parentVC scrollToNextVideo];
-            return;
+        // 方式4: 通过全局查找所有窗口中的视图控制器
+        NSArray *windows = [UIApplication sharedApplication].windows;
+        for (UIWindow *window in windows) {
+            UIViewController *rootVC = window.rootViewController;
+            if (rootVC) {
+                // 递归查找所有视图控制器
+                NSMutableArray *viewControllers = [NSMutableArray array];
+                [self findAllViewControllers:rootVC inArray:viewControllers];
+                
+                for (UIViewController *vc in viewControllers) {
+                    if ([vc isKindOfClass:%c(AWENewFeedTableViewController)]) {
+                        [(AWENewFeedTableViewController *)vc scrollToNextVideo];
+                        return;
+                    }
+                }
+            }
         }
     }
     %orig;
+}
+
+// 新增方法：递归查找所有视图控制器
+%new
+- (void)findAllViewControllers:(UIViewController *)viewController inArray:(NSMutableArray *)array {
+    [array addObject:viewController];
+    
+    if (viewController.childViewControllers.count > 0) {
+        for (UIViewController *childVC in viewController.childViewControllers) {
+            [self findAllViewControllers:childVC inArray:array];
+        }
+    }
+    
+    if (viewController.presentedViewController) {
+        [self findAllViewControllers:viewController.presentedViewController inArray:array];
+    }
+    
+    if ([viewController isKindOfClass:[UINavigationController class]]) {
+        UINavigationController *navController = (UINavigationController *)viewController;
+        for (UIViewController *vc in navController.viewControllers) {
+            [self findAllViewControllers:vc inArray:array];
+        }
+    }
+    
+    if ([viewController isKindOfClass:[UITabBarController class]]) {
+        UITabBarController *tabController = (UITabBarController *)viewController;
+        for (UIViewController *vc in tabController.viewControllers) {
+            [self findAllViewControllers:vc inArray:array];
+        }
+    }
 }
 - (void)containerDidFullyDisplayWithReason:(NSInteger)arg1 {
     if ([[[self container] parentViewController] isKindOfClass:%c(AWENewFeedTableViewController)] && [BHIManager skipRecommendations]) {
@@ -1732,13 +1808,15 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     }
     if ([BHIManager hideElementButton]) {
         [self addHideElementButton];
-        // 如果全局隐藏状态为true，则应用隐藏
+        // 如果全局隐藏状态为true，则延迟应用隐藏状态，确保视图完全加载后再应用
         if (globalElementsHidden) {
-            AWEAwemeBaseViewController *rootVC = self.viewController;
-            if ([rootVC.interactionController isKindOfClass:%c(TTKFeedInteractionLegacyMainContainerElement)]) {
-                TTKFeedInteractionLegacyMainContainerElement *interactionController = rootVC.interactionController;
-                [interactionController hideAllElements:true exceptArray:nil];
-            }
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                AWEAwemeBaseViewController *rootVC = self.viewController;
+                if ([rootVC.interactionController isKindOfClass:%c(TTKFeedInteractionLegacyMainContainerElement)]) {
+                    TTKFeedInteractionLegacyMainContainerElement *interactionController = rootVC.interactionController;
+                    [interactionController hideAllElements:true exceptArray:nil];
+                }
+            });
         }
     }
     if ([BHIManager videoUploadDate] || [BHIManager uploadRegion]) {
@@ -1754,13 +1832,15 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     }
     if ([BHIManager hideElementButton]) {
         [self addHideElementButton];
-        // 如果全局隐藏状态为true，则应用隐藏
+        // 如果全局隐藏状态为true，则延迟应用隐藏状态，确保视图完全加载后再应用
         if (globalElementsHidden) {
-            AWEAwemeBaseViewController *rootVC = self.viewController;
-            if ([rootVC.interactionController isKindOfClass:%c(TTKFeedInteractionLegacyMainContainerElement)]) {
-                TTKFeedInteractionLegacyMainContainerElement *interactionController = rootVC.interactionController;
-                [interactionController hideAllElements:true exceptArray:nil];
-            }
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                AWEAwemeBaseViewController *rootVC = self.viewController;
+                if ([rootVC.interactionController isKindOfClass:%c(TTKFeedInteractionLegacyMainContainerElement)]) {
+                    TTKFeedInteractionLegacyMainContainerElement *interactionController = rootVC.interactionController;
+                    [interactionController hideAllElements:true exceptArray:nil];
+                }
+            });
         }
     }
     if ([BHIManager videoUploadDate] || [BHIManager uploadRegion]) {
@@ -2092,7 +2172,7 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 %new - (NSString *)formattedDateStringFromTimestamp:(NSTimeInterval)timestamp {
     NSDate *date = [NSDate dateWithTimeIntervalSince1970:timestamp];
     NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-    formatter.dateFormat = @"yyyy-MM-dd";
+    formatter.dateFormat = @"yyyy-MM-dd HH:mm";
     return [formatter stringFromDate:date];
 }
 
