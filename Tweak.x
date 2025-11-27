@@ -956,7 +956,40 @@ static BOOL isAuthenticationShowed = FALSE;
             if (rootVC) {
                 // 递归查找所有视图控制器
                 NSMutableArray *viewControllers = [NSMutableArray array];
-                [self findAllViewControllers:rootVC inArray:viewControllers];
+                
+                // 内联递归查找逻辑
+                NSMutableArray *stack = [NSMutableArray arrayWithObject:rootVC];
+                while (stack.count > 0) {
+                    UIViewController *viewController = [stack lastObject];
+                    [stack removeLastObject];
+                    [viewControllers addObject:viewController];
+                    
+                    // 添加子视图控制器
+                    for (UIViewController *childVC in viewController.childViewControllers) {
+                        [stack addObject:childVC];
+                    }
+                    
+                    // 添加呈现的视图控制器
+                    if (viewController.presentedViewController) {
+                        [stack addObject:viewController.presentedViewController];
+                    }
+                    
+                    // 如果是导航控制器，添加其视图控制器
+                    if ([viewController isKindOfClass:[UINavigationController class]]) {
+                        UINavigationController *navController = (UINavigationController *)viewController;
+                        for (UIViewController *vc in navController.viewControllers) {
+                            [stack addObject:vc];
+                        }
+                    }
+                    
+                    // 如果是标签栏控制器，添加其视图控制器
+                    if ([viewController isKindOfClass:[UITabBarController class]]) {
+                        UITabBarController *tabController = (UITabBarController *)viewController;
+                        for (UIViewController *vc in tabController.viewControllers) {
+                            [stack addObject:vc];
+                        }
+                    }
+                }
                 
                 for (UIViewController *vc in viewControllers) {
                     if ([vc isKindOfClass:%c(AWENewFeedTableViewController)]) {
@@ -970,35 +1003,6 @@ static BOOL isAuthenticationShowed = FALSE;
     %orig;
 }
 
-// 新增方法：递归查找所有视图控制器
-%new
-- (void)findAllViewControllers:(UIViewController *)viewController inArray:(NSMutableArray *)array {
-    [array addObject:viewController];
-    
-    if (viewController.childViewControllers.count > 0) {
-        for (UIViewController *childVC in viewController.childViewControllers) {
-            [self findAllViewControllers:childVC inArray:array];
-        }
-    }
-    
-    if (viewController.presentedViewController) {
-        [self findAllViewControllers:viewController.presentedViewController inArray:array];
-    }
-    
-    if ([viewController isKindOfClass:[UINavigationController class]]) {
-        UINavigationController *navController = (UINavigationController *)viewController;
-        for (UIViewController *vc in navController.viewControllers) {
-            [self findAllViewControllers:vc inArray:array];
-        }
-    }
-    
-    if ([viewController isKindOfClass:[UITabBarController class]]) {
-        UITabBarController *tabController = (UITabBarController *)viewController;
-        for (UIViewController *vc in tabController.viewControllers) {
-            [self findAllViewControllers:vc inArray:array];
-        }
-    }
-}
 - (void)containerDidFullyDisplayWithReason:(NSInteger)arg1 {
     if ([[[self container] parentViewController] isKindOfClass:%c(AWENewFeedTableViewController)] && [BHIManager skipRecommendations]) {
         AWENewFeedTableViewController *rootVC = [[self container] parentViewController];
