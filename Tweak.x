@@ -17,31 +17,7 @@ static BOOL globalElementsHidden = NO;
 @end
 
 // 前向声明类以解决编译错误
-@class AWEVideoPlayViewController;
-@class AWEVideoPlayerController;
-@class AWEVideoPlayerView;
-@class AWEVideoDetailViewController;
 @class AWEAwemePlayInteractionView;
-
-// 添加方法声明以解决编译错误
-@interface AWEVideoPlayViewController (BHTikTokAdditions)
-- (AWEAwemePlayInteractionView *)valueForKey:(NSString *)key;
-@end
-
-@interface AWEVideoPlayerController (BHTikTokAdditions)
-- (AWEAwemePlayInteractionView *)valueForKey:(NSString *)key;
-- (void)setModel:(AWEAwemeModel *)model;
-@end
-
-@interface AWEVideoPlayerView (BHTikTokAdditions)
-@property(readonly, nonatomic) UIView *superview;
-- (void)setModel:(AWEAwemeModel *)model;
-@end
-
-@interface AWEVideoDetailViewController (BHTikTokAdditions)
-- (AWEAwemePlayInteractionView *)valueForKey:(NSString *)key;
-- (void)setCurrentAwemeModel:(AWEAwemeModel *)model;
-@end
 
 static void showAlert(NSString *title, NSString *message, NSString *okTitle, NSString *cancelTitle, void (^okHandler)(void)) {
   Class alertViewClass = NSClassFromString(@"AWEUIAlertView");

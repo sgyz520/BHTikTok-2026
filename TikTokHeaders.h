@@ -396,6 +396,31 @@
 - (NSNumber *)numberFromUserDefaultsForKey:(NSString *)key; // new
 @end
 
+// 添加缺失的类定义
+@interface AWEVideoPlayViewController : UIViewController
+- (id)valueForKey:(NSString *)key;
+- (void)setModel:(AWEAwemeModel *)model;
+- (AWEAwemeModel *)model;
+@end
+
+@interface AWEVideoPlayerController : UIViewController
+- (id)valueForKey:(NSString *)key;
+- (void)setModel:(AWEAwemeModel *)model;
+- (AWEAwemeModel *)model;
+@end
+
+@interface AWEVideoPlayerView : UIView
+@property(nonatomic, readonly) UIView *superview;
+- (void)setModel:(AWEAwemeModel *)model;
+- (AWEAwemeModel *)model;
+@end
+
+@interface AWEVideoDetailViewController : UIViewController
+- (id)valueForKey:(NSString *)key;
+- (void)setCurrentAwemeModel:(AWEAwemeModel *)model;
+- (AWEAwemeModel *)currentAwemeModel;
+@end
+
 static BOOL is_iPad() {
     if ([(NSString *)[UIDevice currentDevice].model hasPrefix:@"iPad"]) {
         return YES;
