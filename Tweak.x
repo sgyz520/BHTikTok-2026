@@ -154,7 +154,7 @@ static BOOL isAuthenticationShowed = FALSE;
 %hook AWEUserWorkCollectionViewCell
 - (void)configWithModel:(id)arg1 isMine:(BOOL)arg2 { // Video like count & upload date lables
     %orig;
-    if ([BHIManager videoLikeCount] || [BHIManager videoUploadDate]) {
+    if ([BHIManager videoLikeCount] || true) { // 始终显示上传时间
         for (int i = 0; i < [[self.contentView subviews] count]; i ++) {
             UIView *j = [[self.contentView subviews] objectAtIndex:i];
             if (j.tag == 1001) {
@@ -222,7 +222,7 @@ static BOOL isAuthenticationShowed = FALSE;
                 [likeCountLabel.heightAnchor constraintEqualToConstant:16],
             ]];
         }
-        if ([BHIManager videoUploadDate]) {
+        // 始终显示上传时间
         [self.contentView addSubview:clockImage];
         [NSLayoutConstraint activateConstraints:@[
                 [clockImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:128],
@@ -237,7 +237,6 @@ static BOOL isAuthenticationShowed = FALSE;
                 [uploadDateLabel.widthAnchor constraintEqualToConstant:200],
                 [uploadDateLabel.heightAnchor constraintEqualToConstant:16],
             ]];
-        }
     }
 }
 %new - (NSString *)formattedNumber:(NSInteger)number {
@@ -1301,7 +1300,7 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
             
             // 创建IP属地标签（不包含上传时间）
             UILabel *uploadLabel = [[UILabel alloc] init];
-            uploadLabel.text = locationInfo; // 只显示IP属地，不显示时间
+            uploadLabel.text = [NSString stringWithFormat:@"%@·", locationInfo]; // 在IP属地后添加点作为分隔符
             uploadLabel.tag = 666;
             
             // 设置字体和样式
