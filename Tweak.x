@@ -1821,12 +1821,6 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
             }
         });
     }
-    if ([BHIManager videoUploadDate] || [BHIManager uploadRegion]) {
-        // 延迟调用addVideoInfoLabels，确保视图完全加载
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [self addVideoInfoLabels];
-        });
-    }
 }
 - (void)configureWithModel:(id)model {
     %orig;
@@ -1844,12 +1838,6 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
                 TTKFeedInteractionLegacyMainContainerElement *interactionController = rootVC.interactionController;
                 [interactionController hideAllElements:globalElementsHidden exceptArray:nil];
             }
-        });
-    }
-    if ([BHIManager videoUploadDate] || [BHIManager uploadRegion]) {
-        // 延迟调用addVideoInfoLabels，确保视图完全加载
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [self addVideoInfoLabels];
         });
     }
 }
@@ -2048,218 +2036,87 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
         [self.hud dismiss];
     }
 }
+%end
 
-// 添加视频信息标签（上传日期和国家）
-%new - (void)addVideoInfoLabels {
-    // 移除已存在的标签，避免重复添加
-    UIView *existingDateLabel = [self viewWithTag:1001];
-    UIView *existingCountryLabel = [self viewWithTag:1002];
-    if (existingDateLabel) [existingDateLabel removeFromSuperview];
-    if (existingCountryLabel) [existingCountryLabel removeFromSuperview];
+%hook AWEAwemePlayInteractionView
+- (void)updateWithModel:(AWEAwemeModel *)model {
+    %orig;
     
-    // 获取视频模型
-    AWEAwemeBaseViewController *rootVC = self.viewController;
-    if (!rootVC || !rootVC.model) {
-        NSLog(@"BHTikTok: Cannot get rootVC or model");
+    // 只有在用户启用了视频上传日期显示时才添加标签
+    if (![BHIManager videoUploadDate]) {
         return;
     }
     
-    AWEAwemeModel *model = rootVC.model;
-    NSNumber *createTime = model.createTime;
-    NSString *region = model.region;
+    // 移除旧的时间标签，防止重复
+    [[self viewWithTag:9991] removeFromSuperview];
     
-    // 改为直接使用父视图的安全布局或其他固定位置作为参考
-    UIView *referenceView = self.safeAreaLayoutGuide.topAnchor;
+    // 获取上传时间
+    NSNumber *ts = model.createTime ? model.createTime : 
+                   [model valueForKey:@"createTimeFromServer"] ? 
+                   [model valueForKey:@"createTimeFromServer"] : 
+                   nil;
     
-    // 创建并配置日期标签
-    UILabel *uploadDateLabel = [[UILabel alloc] init];
-    uploadDateLabel.tag = 1001;
-    uploadDateLabel.text = [self formattedDateStringFromTimestamp:[createTime doubleValue]];
-    uploadDateLabel.font = [UIFont boldSystemFontOfSize:13.0];
-    uploadDateLabel.textColor = [UIColor whiteColor];
-    uploadDateLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    if (!ts) return;
     
-    [self addSubview:uploadDateLabel];
+    NSDate *date = [NSDate dateWithTimeIntervalSince1970:ts.doubleValue];
+    NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
+    fmt.dateFormat = @"yyyy-MM-dd";
+    NSString *dateStr = [fmt stringFromDate:date];
     
-    UIImageView *clockImage = [[UIImageView alloc] init];
-    clockImage.image = [UIImage systemImageNamed:@"clock"];
-    clockImage.tintColor = [UIColor whiteColor];
-    clockImage.translatesAutoresizingMaskIntoConstraints = NO;
-    [self addSubview:clockImage];
+    UILabel *timeLabel = [[UILabel alloc] init];
+    timeLabel.tag = 9991;
+    timeLabel.text = [NSString stringWithFormat:@"发布于 %@", dateStr];
+    timeLabel.textColor = [UIColor whiteColor];
+    timeLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightSemibold];
+    timeLabel.translatesAutoresizingMaskIntoConstraints = NO;
     
-    // 使用父视图的顶部进行约束设置
+    [self addSubview:timeLabel];
+    
+    // 找到标题标签
+    UILabel *titleLabel = nil;
+    UILabel *descriptionLabel = nil;
+    
+    // 遍历子视图，找到标题和描述
+    for (UIView *sub in self.subviews) {
+        if ([sub isKindOfClass:NSClassFromString(@"AWEAttributionLabel")] || 
+            [sub isKindOfClass:NSClassFromString(@"UILabel")]) {
+            if (!titleLabel) {
+                titleLabel = (UILabel *)sub;  // 标题
+            } else {
+                descriptionLabel = (UILabel *)sub;  // 描述
+            }
+        }
+    }
+    
+    if (!titleLabel) return;
+    
+    // 获取描述信息的高度
+    CGFloat descriptionHeight = descriptionLabel ? [descriptionLabel sizeThatFits:CGSizeMake(self.bounds.size.width - 40, CGFLOAT_MAX)].height : 0;
+    
+    // 上传时间距离标题下方 4 像素
+    CGFloat timeTopMargin = descriptionHeight > 0 ? 4 : 0;  // 如果有描述，时间放在描述下方；没有描述则放在标题下方
+    
+    // 设置上传时间标签的约束
     [NSLayoutConstraint activateConstraints:@[
-        [clockImage.topAnchor constraintEqualToAnchor:referenceView constant:10],
-        [clockImage.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:4],
-        [clockImage.widthAnchor constraintEqualToConstant:16],
-        [clockImage.heightAnchor constraintEqualToConstant:16],
-        [uploadDateLabel.topAnchor constraintEqualToAnchor:referenceView constant:9],
-        [uploadDateLabel.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:23],
-        [uploadDateLabel.widthAnchor constraintEqualToConstant:200],
-        [uploadDateLabel.heightAnchor constraintEqualToConstant:16]
+        [timeLabel.topAnchor constraintEqualToAnchor:descriptionLabel ? descriptionLabel.bottomAnchor : titleLabel.bottomAnchor constant:timeTopMargin],
+        [timeLabel.leadingAnchor constraintEqualToAnchor:titleLabel.leadingAnchor],
     ]];
     
-    // 如果有区域信息，添加区域标签
-    if (region) {
-        UILabel *countryLabel = [[UILabel alloc] init];
-        countryLabel.tag = 1002;
-        countryLabel.font = [UIFont boldSystemFontOfSize:13.0];
-        countryLabel.textColor = [UIColor whiteColor];
-        countryLabel.text = region;
-        countryLabel.translatesAutoresizingMaskIntoConstraints = NO;
-        
-        [self addSubview:countryLabel];
-        
-        // 添加国家图标
-        UIImageView *globeImage = [[UIImageView alloc] init];
-        globeImage.image = [UIImage systemImageNamed:@"globe"];
-        globeImage.tintColor = [UIColor whiteColor];
-        globeImage.translatesAutoresizingMaskIntoConstraints = NO;
-        [self addSubview:globeImage];
-        
-        // 设置约束
+    // 播放进度条的上方也需要有足够的间距
+    UIView *progressBar = nil;
+    for (UIView *sub in self.subviews) {
+        if ([sub isKindOfClass:NSClassFromString(@"AWEProgressBar")]) {
+            progressBar = sub;
+            break;
+        }
+    }
+    
+    if (progressBar) {
+        // 设置进度条的位置：上传时间下方，进度条上方
         [NSLayoutConstraint activateConstraints:@[
-            [globeImage.topAnchor constraintEqualToAnchor:uploadDateLabel.bottomAnchor constant:5],
-            [globeImage.leadingAnchor constraintEqualToAnchor:uploadDateLabel.leadingAnchor],
-            [globeImage.widthAnchor constraintEqualToConstant:16],
-            [globeImage.heightAnchor constraintEqualToConstant:16],
-            [countryLabel.topAnchor constraintEqualToAnchor:uploadDateLabel.bottomAnchor constant:5],
-            [countryLabel.leadingAnchor constraintEqualToAnchor:uploadDateLabel.leadingAnchor constant:23],
-            [countryLabel.widthAnchor constraintEqualToConstant:200],
-            [countryLabel.heightAnchor constraintEqualToConstant:16]
+            [progressBar.topAnchor constraintEqualToAnchor:timeLabel.bottomAnchor constant:10],  // 时间下方 10px
         ]];
     }
-}
-
-// 格式化日期时间戳为字符串
-%new - (NSString *)formattedDateStringFromTimestamp:(NSTimeInterval)timestamp {
-    NSDate *date = [NSDate dateWithTimeIntervalSince1970:timestamp];
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    dateFormatter.dateFormat = @"yyyy-MM-dd";
-    return [dateFormatter stringFromDate:date];
-}
-
-// 根据地区名称获取国家代码
-%new - (NSString *)getCountryCodeFromRegion:(NSString *)region {
-    // 常见地区名称到国家代码的映射
-    NSDictionary *regionToCountryCode = @{
-        @"United States": @"US",
-        @"United Kingdom": @"GB",
-        @"China": @"CN",
-        @"Japan": @"JP",
-        @"South Korea": @"KR",
-        @"Canada": @"CA",
-        @"Australia": @"AU",
-        @"France": @"FR",
-        @"Germany": @"DE",
-        @"Italy": @"IT",
-        @"Spain": @"ES",
-        @"Russia": @"RU",
-        @"India": @"IN",
-        @"Brazil": @"BR",
-        @"Mexico": @"MX",
-        @"Argentina": @"AR",
-        @"Chile": @"CL",
-        @"Colombia": @"CO",
-        @"Peru": @"PE",
-        @"Venezuela": @"VE",
-        @"Egypt": @"EG",
-        @"South Africa": @"ZA",
-        @"Nigeria": @"NG",
-        @"Kenya": @"KE",
-        @"Morocco": @"MA",
-        @"Ghana": @"GH",
-        @"Thailand": @"TH",
-        @"Vietnam": @"VN",
-        @"Philippines": @"PH",
-        @"Indonesia": @"ID",
-        @"Malaysia": @"MY",
-        @"Singapore": @"SG",
-        @"Pakistan": @"PK",
-        @"Bangladesh": @"BD",
-        @"Sri Lanka": @"LK",
-        @"Myanmar": @"MM",
-        @"Cambodia": @"KH",
-        @"Laos": @"LA",
-        @"New Zealand": @"NZ",
-        @"Turkey": @"TR",
-        @"Saudi Arabia": @"SA",
-        @"Israel": @"IL",
-        @"UAE": @"AE",
-        @"Iran": @"IR",
-        @"Iraq": @"IQ",
-        @"Poland": @"PL",
-        @"Netherlands": @"NL",
-        @"Belgium": @"BE",
-        @"Switzerland": @"CH",
-        @"Austria": @"AT",
-        @"Sweden": @"SE",
-        @"Norway": @"NO",
-        @"Denmark": @"DK",
-        @"Finland": @"FI",
-        @"Greece": @"GR",
-        @"Portugal": @"PT",
-        @"Ireland": @"IE",
-        @"Czech Republic": @"CZ",
-        @"Hungary": @"HU",
-        @"Romania": @"RO",
-        @"Bulgaria": @"BG",
-        @"Croatia": @"HR",
-        @"Slovakia": @"SK",
-        @"Slovenia": @"SI",
-        @"Estonia": @"EE",
-        @"Latvia": @"LV",
-        @"Lithuania": @"LT",
-        @"Ukraine": @"UA",
-        @"Belarus": @"BY",
-        @"Moldova": @"MD",
-        @"Cyprus": @"CY",
-        @"Luxembourg": @"LU",
-        @"Malta": @"MT",
-        @"Iceland": @"IS",
-        @"Albania": @"AL",
-        @"Macedonia": @"MK",
-        @"Serbia": @"RS",
-        @"Montenegro": @"ME",
-        @"Bosnia": @"BA",
-        @"Senegal": @"SN",
-        @"Ivory Coast": @"CI",
-        @"Mali": @"ML",
-        @"Burkina Faso": @"BF",
-        @"Niger": @"NE",
-        @"Benin": @"BJ",
-        @"Togo": @"TG",
-        @"Guinea": @"GN",
-        @"Sierra Leone": @"SL",
-        @"Liberia": @"LR",
-        @"Gambia": @"GM",
-        @"Guinea-Bissau": @"GW",
-        @"Cape Verde": @"CV",
-        @"Mauritania": @"MR",
-        @"Somalia": @"SO",
-        @"Djibouti": @"DJ",
-        @"Eritrea": @"ER",
-        @"Sudan": @"SD",
-        @"Libya": @"LY",
-        @"Tunisia": @"TN",
-        @"Algeria": @"DZ"
-    };
-    
-    // 尝试从映射中获取国家代码
-    NSString *countryCode = regionToCountryCode[region];
-    if (countryCode) {
-        return countryCode;
-    }
-    
-    // 如果没有找到，尝试从地区名称中提取可能的代码
-    if (region.length >= 2) {
-        // 尝试取最后两个字符作为国家代码
-        NSString *possibleCode = [[region substringFromIndex:region.length - 2] uppercaseString];
-        return possibleCode;
-    }
-    
-    // 默认返回US
-    return @"US";
 }
 %end
 
