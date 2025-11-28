@@ -154,59 +154,70 @@ static BOOL isAuthenticationShowed = FALSE;
 %hook AWEUserWorkCollectionViewCell
 - (void)configWithModel:(id)arg1 isMine:(BOOL)arg2 { // Video like count & upload date lables
     %orig;
-    if ([BHIManager videoLikeCount] || true) { // 始终显示上传时间
-        for (int i = 0; i < [[self.contentView subviews] count]; i ++) {
-            UIView *j = [[self.contentView subviews] objectAtIndex:i];
-            if (j.tag == 1001) {
-                [j removeFromSuperview];
-            } 
-            else if (j.tag == 1002) {
-                [j removeFromSuperview];
-            }
+    
+    // 检查是否需要显示视频上传时间
+    if (![BHIManager videoUploadDate]) {
+        return;
+    }
+    
+    // 清理旧的标签
+    for (int i = 0; i < [[self.contentView subviews] count]; i ++) {
+        UIView *j = [[self.contentView subviews] objectAtIndex:i];
+        if (j.tag == 1001) {
+            [j removeFromSuperview];
+        } 
+        else if (j.tag == 1002) {
+            [j removeFromSuperview];
         }
+    }
 
-        AWEAwemeModel *model = [self model];
-        AWEAwemeStatisticsModel *statistics = [model statistics];
-        NSNumber *createTime = [model createTime];
-        NSNumber *likeCount = [statistics diggCount];
-        NSString *likeCountFormatted = [self formattedNumber:[likeCount integerValue]];
-        NSString *formattedDate = [self formattedDateStringFromTimestamp:[createTime doubleValue]];
+    AWEAwemeModel *model = [self model];
+    if (!model) {
+        return;
+    }
+    
+    AWEAwemeStatisticsModel *statistics = [model statistics];
+    NSNumber *createTime = [model createTime];
+    
+    // 如果没有创建时间，尝试从其他属性获取
+    if (!createTime) {
+        createTime = [model valueForKey:@"createTimeFromServer"];
+    }
+    
+    if (!createTime) {
+        return;
+    }
+    
+    NSNumber *likeCount = [statistics diggCount];
+    NSString *likeCountFormatted = [self formattedNumber:[likeCount integerValue]];
+    NSString *formattedDate = [self formattedDateStringFromTimestamp:[createTime doubleValue]];
 
-        UILabel *likeCountLabel = [UILabel new];
-        likeCountLabel.text = likeCountFormatted;
-        likeCountLabel.textColor = [UIColor whiteColor];
-        likeCountLabel.font = [UIFont boldSystemFontOfSize:13.0];
-        likeCountLabel.tag = 1001;
-        [likeCountLabel setTranslatesAutoresizingMaskIntoConstraints:false];
-        
-        UIImageView *heartImage = [UIImageView new];
-        heartImage.image = [UIImage systemImageNamed:@"heart"];
-        heartImage.tintColor = [UIColor whiteColor];
-        [heartImage setTranslatesAutoresizingMaskIntoConstraints:false];
+    UILabel *likeCountLabel = [UILabel new];
+    likeCountLabel.text = likeCountFormatted;
+    likeCountLabel.textColor = [UIColor whiteColor];
+    likeCountLabel.font = [UIFont boldSystemFontOfSize:13.0];
+    likeCountLabel.tag = 1001;
+    [likeCountLabel setTranslatesAutoresizingMaskIntoConstraints:false];
+    
+    UIImageView *heartImage = [UIImageView new];
+    heartImage.image = [UIImage systemImageNamed:@"heart"];
+    heartImage.tintColor = [UIColor whiteColor];
+    [heartImage setTranslatesAutoresizingMaskIntoConstraints:false];
 
-        UILabel *uploadDateLabel = [UILabel new];
-        uploadDateLabel.text = formattedDate;
-        uploadDateLabel.textColor = [UIColor whiteColor];
-        uploadDateLabel.font = [UIFont boldSystemFontOfSize:13.0];
-        uploadDateLabel.tag = 1002;
-        [uploadDateLabel setTranslatesAutoresizingMaskIntoConstraints:false];
+    UILabel *uploadDateLabel = [UILabel new];
+    uploadDateLabel.text = formattedDate;
+    uploadDateLabel.textColor = [UIColor whiteColor];
+    uploadDateLabel.font = [UIFont boldSystemFontOfSize:13.0];
+    uploadDateLabel.tag = 1002;
+    [uploadDateLabel setTranslatesAutoresizingMaskIntoConstraints:false];
 
-        UIImageView *clockImage = [UIImageView new];
-        clockImage.image = [UIImage systemImageNamed:@"clock"];
-        clockImage.tintColor = [UIColor whiteColor];
-        [clockImage setTranslatesAutoresizingMaskIntoConstraints:false];
-        
-
-        for (int i = 0; i < [[self.contentView subviews] count]; i ++) {
-            UIView *j = [[self.contentView subviews] objectAtIndex:i];
-            if (j.tag == 1001) {
-                [j removeFromSuperview];
-            } 
-            else if (j.tag == 1002) {
-                [j removeFromSuperview];
-            }
-        }
-        if ([BHIManager videoLikeCount]) {
+    UIImageView *clockImage = [UIImageView new];
+    clockImage.image = [UIImage systemImageNamed:@"clock"];
+    clockImage.tintColor = [UIColor whiteColor];
+    [clockImage setTranslatesAutoresizingMaskIntoConstraints:false];
+    
+    // 显示点赞数（如果启用）
+    if ([BHIManager videoLikeCount]) {
         [self.contentView addSubview:heartImage];
         [NSLayoutConstraint activateConstraints:@[
                 [heartImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:110],
@@ -221,23 +232,23 @@ static BOOL isAuthenticationShowed = FALSE;
                 [likeCountLabel.widthAnchor constraintEqualToConstant:200],
                 [likeCountLabel.heightAnchor constraintEqualToConstant:16],
             ]];
-        }
-        // 始终显示上传时间
-        [self.contentView addSubview:clockImage];
-        [NSLayoutConstraint activateConstraints:@[
-                [clockImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:128],
-                [clockImage.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:4],
-                [clockImage.widthAnchor constraintEqualToConstant:16],
-                [clockImage.heightAnchor constraintEqualToConstant:16],
-            ]];
-        [self.contentView addSubview:uploadDateLabel];
-        [NSLayoutConstraint activateConstraints:@[
-                [uploadDateLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:127],
-                [uploadDateLabel.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:23],
-                [uploadDateLabel.widthAnchor constraintEqualToConstant:200],
-                [uploadDateLabel.heightAnchor constraintEqualToConstant:16],
-            ]];
     }
+    
+    // 显示上传时间
+    [self.contentView addSubview:clockImage];
+    [NSLayoutConstraint activateConstraints:@[
+            [clockImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:([BHIManager videoLikeCount] ? 128 : 110)],
+            [clockImage.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:4],
+            [clockImage.widthAnchor constraintEqualToConstant:16],
+            [clockImage.heightAnchor constraintEqualToConstant:16],
+        ]];
+    [self.contentView addSubview:uploadDateLabel];
+    [NSLayoutConstraint activateConstraints:@[
+            [uploadDateLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:([BHIManager videoLikeCount] ? 127 : 109)],
+            [uploadDateLabel.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:23],
+            [uploadDateLabel.widthAnchor constraintEqualToConstant:200],
+            [uploadDateLabel.heightAnchor constraintEqualToConstant:16],
+        ]];
 }
 %new - (NSString *)formattedNumber:(NSInteger)number {
 
@@ -2045,6 +2056,11 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
  - (void)updateWithModel:(AWEAwemeModel *)model { 
  
      %orig; 
+     
+     // 检查是否需要显示视频上传时间
+     if (![BHIManager videoUploadDate]) {
+         return;
+     }
  
      // 清理旧的 
      [[self viewWithTag:42006] removeFromSuperview]; 
