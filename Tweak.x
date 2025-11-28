@@ -1291,7 +1291,7 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
                 locationInfo = getCountryNameForCode(countryID);
             }
             
-            // 获取上传时间
+            // 获取上传时间（不再显示在作者名字后面）
             NSNumber *ts = model.createTime ?: [model valueForKey:@"createTimeFromServer"];
             NSString *dateStr = @"";
             if (ts) {
@@ -1306,13 +1306,9 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
                 return;
             }
             
-            // 创建IP属地和上传时间标签，考虑不同屏幕尺寸
+            // 创建IP属地标签（不包含上传时间）
             UILabel *uploadLabel = [[UILabel alloc] init];
-            if (dateStr.length > 0) {
-                uploadLabel.text = [NSString stringWithFormat:@"%@ • %@", locationInfo, dateStr];
-            } else {
-                uploadLabel.text = [NSString stringWithFormat:@"%@ •", locationInfo];
-            }
+            uploadLabel.text = locationInfo; // 只显示IP属地，不显示时间
             uploadLabel.tag = 666;
             
             // 设置字体和样式
@@ -1351,7 +1347,7 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
             CGFloat labelHeight = 20.5; // 固定高度
             
             // 确保标签不会超出父视图边界
-            CGFloat maxWidth = self.bounds.size.width * 0.4; // 最大宽度为父视图宽度的40%，因为现在包含了时间
+            CGFloat maxWidth = self.bounds.size.width * 0.3; // 最大宽度为父视图宽度的30%，因为只显示IP属地
             if (labelWidth > maxWidth) {
                 labelWidth = maxWidth;
                 uploadLabel.numberOfLines = 1;
@@ -2073,32 +2069,7 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
      NSString *dateStr = [fmt stringFromDate:date]; 
  
      // ================ 
-     // 2. 获取 IP 属地 
-     // ================ 
-     NSString *ipStr = nil; 
- 
-     if ([model respondsToSelector:@selector(region)]) { 
-         ipStr = model.region;    // 通常是 CN、JP、US 
-     } 
- 
-     if (!ipStr || ipStr.length == 0) { 
-         ipStr = @"未知"; 
-     } 
- 
-     // 中文显示（CN→中国） 
-     NSDictionary *map = @{ 
-         @"CN":@"中国", 
-         @"TW":@"中国台湾", 
-         @"HK":@"中国香港", 
-         @"US":@"美国", 
-         @"JP":@"日本", 
-         @"KR":@"韩国", 
-     }; 
- 
-     if (map[ipStr]) ipStr = map[ipStr]; 
- 
-     // ================ 
-     // 3. 创建组合标签 
+     // 2. 创建时间标签 
      // ================ 
      UILabel *label = [[UILabel alloc] init]; 
      label.tag = 42006; 
@@ -2106,8 +2077,8 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
      label.textColor = [UIColor colorWithWhite:1 alpha:0.92]; 
      label.translatesAutoresizingMaskIntoConstraints = NO; 
  
-     // ★★ 组合成你要的样式 ★★ 
-     label.text = [NSString stringWithFormat:@"IP %@  %@", ipStr, dateStr]; 
+     // ★★ 只显示上传时间 ★★ 
+     label.text = [NSString stringWithFormat:@"上传时间: %@", dateStr]; 
  
      [self addSubview:label]; 
  
@@ -2115,16 +2086,35 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
      // 4. 找到描述 label 
      // ================ 
      UILabel *descLabel = nil; 
- 
+     UIView *referenceView = nil;
+     
+     // 尝试多种方式查找描述标签
      for (UIView *sub in self.subviews) { 
          if ([NSStringFromClass([sub class]) containsString:@"Desc"] || 
-             [NSStringFromClass([sub class]) containsString:@"desc"]) { 
+             [NSStringFromClass([sub class]) containsString:@"desc"] ||
+             [NSStringFromClass([sub class]) containsString:@"Label"]) { 
              descLabel = (UILabel *)sub; 
+             referenceView = sub;
+             break;
          } 
-     } 
- 
-     if (!descLabel) return; 
- 
+     }
+     
+     // 如果找不到描述标签，尝试查找其他可能的视图作为参考
+     if (!descLabel) {
+         for (UIView *sub in self.subviews) {
+             if ([sub isKindOfClass:[UILabel class]]) {
+                 descLabel = (UILabel *)sub;
+                 referenceView = sub;
+                 break;
+             }
+         }
+     }
+     
+     // 如果仍然找不到，使用父视图作为参考
+     if (!referenceView) {
+         referenceView = self;
+     }
+
      // ================ 
      // 5. 找进度条 
      // ================ 
@@ -2139,17 +2129,25 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
      // ================ 
      // 6. 布局（描述下方） 
      // ================ 
-     [NSLayoutConstraint activateConstraints:@[ 
-         [label.topAnchor constraintEqualToAnchor:descLabel.bottomAnchor constant:6], 
-         [label.leadingAnchor constraintEqualToAnchor:descLabel.leadingAnchor] 
-     ]]; 
- 
-     // 防止挡住进度条 
-     if (progressBar) { 
+     // 使用延迟执行确保布局完成
+     dispatch_async(dispatch_get_main_queue(), ^{
          [NSLayoutConstraint activateConstraints:@[ 
-             [progressBar.topAnchor constraintGreaterThanOrEqualToAnchor:label.bottomAnchor constant:10] 
+             [label.topAnchor constraintEqualToAnchor:referenceView.bottomAnchor constant:6], 
+             [label.leadingAnchor constraintEqualToAnchor:referenceView.leadingAnchor] 
          ]]; 
-     } 
+         
+         // 防止挡住进度条 
+         if (progressBar) { 
+             [NSLayoutConstraint activateConstraints:@[ 
+                 [progressBar.topAnchor constraintGreaterThanOrEqualToAnchor:label.bottomAnchor constant:10] 
+             ]]; 
+         } else {
+             // 如果没有进度条，设置底部约束
+             [NSLayoutConstraint activateConstraints:@[
+                 [label.bottomAnchor constraintLessThanOrEqualToAnchor:self.bottomAnchor constant:-10]
+             ]];
+         }
+     });
  } 
  
  %end
