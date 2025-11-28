@@ -42,6 +42,8 @@
 - (NSString *)emojiForCountryCode:(NSString *)countryCode;
 @end
 
+@class AWEAwemeModel;
+
 @interface AWEAwemePlayInteractionView: UIView
 - (UIView *)viewWithTag:(NSInteger)tag;
 - (void)addSubview:(UIView *)view;
