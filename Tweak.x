@@ -1,5 +1,5 @@
 #import "TikTokHeaders.h"
-#import <objc/runtime.h> // 修复 Runtime 函数报错
+#import <objc/runtime.h>
 
 // ==========================================
 // 全局定义与辅助宏
@@ -25,7 +25,9 @@ _Pragma("clang diagnostic pop")
 // 接口声明 (修复编译错误的关键部分)
 // ==========================================
 
-// 将前向声明改为接口声明，解决 forward declaration 报错
+// 注意：已移除 AWEAwemePlayInteractionView 的定义以修复 duplicate interface 错误
+
+// 如果 TikTokHeaders.h 中没有包含以下类的完整定义，保留这些声明
 @interface AWEVideoPlayViewController : UIViewController
 @end
 
@@ -36,9 +38,6 @@ _Pragma("clang diagnostic pop")
 @end
 
 @interface AWEVideoDetailViewController : UIViewController
-@end
-
-@interface AWEAwemePlayInteractionView : UIView
 @end
 
 // 声明新增的方法，解决 "no visible @interface" 报错
@@ -53,9 +52,12 @@ _Pragma("clang diagnostic pop")
 - (void)startDownload:(NSURL *)url;
 @end
 
+// 修复：补全 AWEAwemeDetailTableViewCell 的方法声明
 @interface AWEAwemeDetailTableViewCell (BHTikTokAdditions)
 - (void)setupCustomButtons;
 - (void)downloadButtonHandler:(UIButton *)sender;
+- (void)downloadVideo:(id)rootVC;    // 新增
+- (void)startDownload:(NSURL *)url;  // 新增
 @end
 
 // 现有 Category 声明
@@ -69,12 +71,17 @@ _Pragma("clang diagnostic pop")
 - (void)updateVideoModels;
 @end
 
-
 // ==========================================
 // 辅助函数
 // ==========================================
 
-// 注意：移除了 topMostController 的定义，因为 TikTokHeaders.h 中已经有了
+static UIViewController *topMostController() {
+    UIViewController *topController = [UIApplication sharedApplication].keyWindow.rootViewController;
+    while (topController.presentedViewController) {
+        topController = topController.presentedViewController;
+    }
+    return topController;
+}
 
 static void showAlert(NSString *title, NSString *message, NSString *okTitle, NSString *cancelTitle, void (^okHandler)(void)) {
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -100,28 +107,23 @@ static void showConfirmation(void (^okHandler)(void)) {
 
 // 核心逻辑：获取当前 View 对应的视频数据模型
 static AWEAwemeModel *getCurrentVideoModel(UIView *view) {
-    // 1. 尝试直接获取关联对象
     AWEAwemeModel *model = objc_getAssociatedObject(view, "currentVideoModel");
     if (model) return model;
     
-    // 2. 尝试从控制器获取
     UIViewController *vc = [view yy_viewController];
     if (vc) {
         if ([vc respondsToSelector:@selector(currentAwemeModel)]) model = [vc currentAwemeModel];
         else if ([vc respondsToSelector:@selector(model)]) model = [vc model];
         
-        // 3. 尝试从控制器的关联对象获取
         if (!model) model = objc_getAssociatedObject(vc, "currentVideoModel");
     }
     return model;
 }
 
-// 辅助更新关联对象
 static void updateInteractionViewModel(UIView *view, AWEAwemeModel *model) {
     if (!model || !view) return;
     objc_setAssociatedObject(view, "currentVideoModel", model, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     
-    // 如果开启了显示时间功能，需要触发重新布局
     if ([BHIManager videoUploadDate]) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [view setNeedsLayout];
@@ -148,7 +150,6 @@ static void updateInteractionViewModel(UIView *view, AWEAwemeModel *model) {
     
     [self applyLanguageSetting:savedLanguage];
     
-    // 首次运行设置默认值
     if (![defaults objectForKey:@"BHTikTokFirstRun"]) {
         [defaults setValue:@"BHTikTokFirstRun" forKey:@"BHTikTokFirstRun"];
         [defaults setBool:true forKey:@"hide_ads"];
@@ -163,7 +164,6 @@ static void updateInteractionViewModel(UIView *view, AWEAwemeModel *model) {
     
     [BHIManager cleanCache];
     
-    // FLEX 调试工具
     if ([defaults boolForKey:@"flex_enebaled"]) {
         [[%c(FLEXManager) performSelector:@selector(sharedManager)] performSelector:@selector(showExplorer)];
     }
@@ -175,8 +175,6 @@ static void updateInteractionViewModel(UIView *view, AWEAwemeModel *model) {
     [[NSUserDefaults standardUserDefaults] setObject:@[language] forKey:@"AppleLanguages"];
     [[NSUserDefaults standardUserDefaults] setObject:language forKey:@"BHTikTok_Language"];
     [[NSUserDefaults standardUserDefaults] synchronize];
-    
-    // 强制刷新 Bundle 字符串
     [[NSBundle mainBundle] localizedStringForKey:@"" value:@"" table:nil];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"LanguageChanged" object:language];
 }
@@ -216,7 +214,7 @@ static BOOL isAuthenticationShowed = FALSE;
 %end
 
 // ==========================================
-// 个人主页/视频列表显示上传日期和点赞 (UI优化版)
+// 个人主页/视频列表显示上传日期和点赞
 // ==========================================
 %hook AWEUserWorkCollectionViewCell
 - (void)configWithModel:(id)arg1 isMine:(BOOL)arg2 {
@@ -227,19 +225,15 @@ static BOOL isAuthenticationShowed = FALSE;
     AWEAwemeModel *model = [self model];
     if (!model) return;
     
-    // 尝试获取现有视图
     UILabel *likeCountLabel = [self.contentView viewWithTag:1001];
     UILabel *uploadDateLabel = [self.contentView viewWithTag:1002];
     UIImageView *heartImage = [self.contentView viewWithTag:1003];
     UIImageView *clockImage = [self.contentView viewWithTag:1004];
 
-    // 获取数据
     NSNumber *createTime = [model createTime] ?: [model valueForKey:@"createTimeFromServer"];
     if (!createTime) return;
 
-    // 只有当视图不存在时才创建 (性能优化)
     if (!uploadDateLabel) {
-        // 心形图标 & 点赞数
         if ([BHIManager videoLikeCount]) {
             heartImage = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"heart"]];
             heartImage.tintColor = [UIColor whiteColor];
@@ -255,7 +249,6 @@ static BOOL isAuthenticationShowed = FALSE;
             [self.contentView addSubview:likeCountLabel];
         }
 
-        // 时钟图标 & 日期
         clockImage = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"clock"]];
         clockImage.tintColor = [UIColor whiteColor];
         clockImage.tag = 1004;
@@ -269,7 +262,6 @@ static BOOL isAuthenticationShowed = FALSE;
         uploadDateLabel.translatesAutoresizingMaskIntoConstraints = NO;
         [self.contentView addSubview:uploadDateLabel];
         
-        // 设置约束
         CGFloat baseTop = 110;
         if ([BHIManager videoLikeCount]) {
              [NSLayoutConstraint activateConstraints:@[
@@ -299,7 +291,6 @@ static BOOL isAuthenticationShowed = FALSE;
         ]];
     }
 
-    // 更新文本内容
     if ([BHIManager videoLikeCount]) {
         NSNumber *likeCount = [[model statistics] diggCount];
         likeCountLabel.text = [self formattedNumber:[likeCount integerValue]];
@@ -324,7 +315,7 @@ static BOOL isAuthenticationShowed = FALSE;
 %end
 
 // ==========================================
-// 自动播放与自动滑动的优化修复
+// 自动播放与自动滑动
 // ==========================================
 %hook AWEPlayVideoPlayerController
 
@@ -342,13 +333,10 @@ static BOOL isAuthenticationShowed = FALSE;
 - (void)playerDidPlayToEnd:(id)arg1 {
     if ([BHIManager autoPlay]) {
         UIViewController *targetVC = nil;
-        
-        // 1. 尝试直接获取
         if ([self.container.parentViewController isKindOfClass:%c(AWENewFeedTableViewController)]) {
             targetVC = self.container.parentViewController;
         }
         
-        // 2. 通过响应链查找 (比遍历 Window 更安全高效)
         if (!targetVC && self.container) {
             UIResponder *next = self.container.nextResponder;
             while (next) {
@@ -382,7 +370,7 @@ static BOOL isAuthenticationShowed = FALSE;
 %end
 
 // ==========================================
-// IP 属地显示优化 (使用缓存)
+// IP 属地显示
 // ==========================================
 static NSMutableDictionary *countryNameCache = nil;
 
@@ -409,7 +397,6 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     %orig;
     if (![BHIManager uploadRegion]) return;
     
-    // 调整 StackView 位置
     BOOL adjusted = NO;
     for (UIView *sub in self.subviews) {
         if ([sub isKindOfClass:[UIStackView class]]) {
@@ -422,7 +409,6 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
         }
     }
     
-    // 如果已经有 Label 且没做调整，直接返回 (优化)
     UILabel *regionLabel = [self viewWithTag:666];
     if (regionLabel && !adjusted && regionLabel.text.length > 0) return;
 
@@ -453,7 +439,6 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     regionLabel.hidden = NO;
     regionLabel.text = [NSString stringWithFormat:@"%@·", locationName];
     
-    // 颜色处理
     NSString *hexColor = [BHIManager uploadRegionLabelColor];
     if ([BHIManager uploadRegionRandomGradient]) {
         NSArray *colors = @[@"FF6B6B", @"4ECDC4", @"45B7D1", @"96CEB4", @"FFEAA7"];
@@ -482,7 +467,7 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 %end
 
 // ==========================================
-// 视频下载与隐藏按钮 (AWEFeedViewTemplateCell)
+// AWEFeedViewTemplateCell
 // ==========================================
 %hook AWEFeedViewTemplateCell
 %property (nonatomic, strong) JGProgressHUD *hud;
@@ -500,7 +485,6 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 }
 
 %new - (void)setupCustomButtons {
-    // 1. 下载按钮
     if ([BHIManager downloadButton] && ![self viewWithTag:998]) {
         UIButton *dlBtn = [UIButton buttonWithType:UIButtonTypeSystem];
         dlBtn.tag = 998;
@@ -517,7 +501,6 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
         ]];
     }
     
-    // 2. 隐藏元素按钮
     if ([BHIManager hideElementButton] && ![self viewWithTag:999]) {
         UIButton *hideBtn = [UIButton buttonWithType:UIButtonTypeSystem];
         hideBtn.tag = 999;
@@ -533,7 +516,6 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
             [hideBtn.heightAnchor constraintEqualToConstant:30],
         ]];
         
-        // 同步隐藏状态
         if (globalElementsHidden) {
              AWEAwemeBaseViewController *rootVC = self.viewController;
              if ([rootVC.interactionController isKindOfClass:%c(TTKFeedInteractionLegacyMainContainerElement)]) {
@@ -547,7 +529,6 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     AWEAwemeBaseViewController *rootVC = self.viewController;
     WEAKify(self);
     
-    // 构建 Menu
     UIAction *videoAction = [UIAction actionWithTitle:@"Download Video" image:[UIImage systemImageNamed:@"film"] identifier:nil handler:^(UIAction *a){
         STRONGify(self);
         [self downloadVideo:rootVC];
@@ -583,7 +564,6 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     }
 }
 
-// 下载逻辑实现
 %new - (void)downloadVideo:(AWEAwemeBaseViewController *)rootVC {
     if (!rootVC.model) return;
     NSURL *url = [rootVC.model.video.playURL bestURLtoDownload];
@@ -647,7 +627,7 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 %end
 
 // ==========================================
-// AWEAwemeDetailTableViewCell (逻辑同上，复用修复)
+// AWEAwemeDetailTableViewCell
 // ==========================================
 %hook AWEAwemeDetailTableViewCell
 %property (nonatomic, strong) JGProgressHUD *hud;
@@ -659,7 +639,6 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 }
 
 %new - (void)setupCustomButtons {
-    // 复用 TemplateCell 中的逻辑，代码一致
     if ([BHIManager downloadButton] && ![self viewWithTag:998]) {
         UIButton *dlBtn = [UIButton buttonWithType:UIButtonTypeSystem];
         dlBtn.tag = 998;
@@ -678,30 +657,27 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 }
 
 %new - (void)downloadButtonHandler:(UIButton *)sender {
-    // 简单实现，复用逻辑
-     AWEAwemeBaseViewController *rootVC = self.viewController;
+    AWEAwemeBaseViewController *rootVC = self.viewController;
     WEAKify(self);
     
     UIAction *videoAction = [UIAction actionWithTitle:@"Download Video" image:[UIImage systemImageNamed:@"film"] identifier:nil handler:^(UIAction *a){
         STRONGify(self);
-        if ([self respondsToSelector:@selector(downloadVideo:)]) [self downloadVideo:rootVC];
-        else [self performSelector:@selector(downloadVideo:) withObject:rootVC]; // Fallback for selector check
+        [self downloadVideo:rootVC];
     }];
     
-    // 省略其他 Action 重复代码，原理同 TemplateCell
+    // 简化版只放一个 Action 演示，逻辑同上
     UIMenu *menu = [UIMenu menuWithTitle:@"" children:@[videoAction]];
     sender.menu = menu;
     sender.showsMenuAsPrimaryAction = YES;
 }
 
-// 需要复制 TemplateCell 的下载方法到这里，或者提取公共类
-// 为确保编译通过，这里补充关键方法
 %new - (void)downloadVideo:(AWEAwemeBaseViewController *)rootVC {
     if (!rootVC.model) return;
     NSURL *url = [rootVC.model.video.playURL bestURLtoDownload];
     self.fileextension = [rootVC.model.video.playURL bestURLtoDownloadFormat];
     [self startDownload:url];
 }
+
 %new - (void)startDownload:(NSURL *)url {
     if (!url) return;
     BHDownload *dwManager = [[BHDownload alloc] init];
@@ -712,9 +688,11 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     self.hud.textLabel.text = @"Downloading";
     [self.hud showInView:topMostController().view];
 }
+
 %new - (void)downloadProgress:(float)progress {
     self.hud.detailTextLabel.text = [BHIManager getDownloadingPersent:progress];
 }
+
 %new - (void)downloadDidFinish:(NSURL *)filePath Filename:(NSString *)fileName {
     NSString *docPath = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
     NSURL *newPath = [[NSURL fileURLWithPath:docPath] URLByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", [[NSUUID UUID] UUIDString], self.fileextension]];
@@ -726,13 +704,14 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
         [BHIManager saveMedia:newPath fileExtension:self.fileextension];
     }
 }
+
 %new - (void)downloadDidFailureWithError:(NSError *)error {
     [self.hud dismiss];
 }
 %end
 
 // ==========================================
-// 播放交互层显示上传日期 (性能最敏感部分)
+// 播放交互层显示上传日期
 // ==========================================
 %hook AWEAwemePlayInteractionView
 
@@ -741,15 +720,12 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     
     if (![BHIManager videoUploadDate]) return;
     
-    // 1. 获取模型 (使用优化后的 Helper)
     AWEAwemeModel *model = getCurrentVideoModel(self);
     if (!model) return;
     
-    // 2. 获取时间戳
     NSNumber *ts = model.createTime ?: [model valueForKey:@"createTimeFromServer"];
     if (!ts) return;
     
-    // 3. 查找或创建 Label (避免重复创建)
     UILabel *dateLabel = [self viewWithTag:42006];
     BOOL isNew = NO;
     if (!dateLabel) {
@@ -766,13 +742,11 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
         isNew = YES;
     }
     
-    // 4. 设置文本 (每次 layout 可能都需要更新，防止复用问题)
     NSDate *date = [NSDate dateWithTimeIntervalSince1970:ts.doubleValue];
     NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
     fmt.dateFormat = @"yyyy-MM-dd HH:mm";
     dateLabel.text = [NSString stringWithFormat:@"上传时间: %@", [fmt stringFromDate:date]];
     
-    // 5. 设置约束 (仅在新建时设置)
     if (isNew) {
         UIView *progressBar = nil;
         for (UIView *sub in self.subviews) {
@@ -802,7 +776,7 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 %end
 
 // ==========================================
-// 视频模型捕获 (替代定时器方案)
+// 视频模型捕获
 // ==========================================
 
 %hook AWEVideoPlayViewController
@@ -810,7 +784,6 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     %orig;
     if (model) {
         objc_setAssociatedObject(self, "currentVideoModel", model, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        // 使用 valueForKey 安全访问私有属性
         AWEAwemePlayInteractionView *interactionView = [self valueForKey:@"_interactionView"];
         updateInteractionViewModel(interactionView, model);
     }
@@ -821,7 +794,6 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 - (void)setModel:(AWEAwemeModel *)model {
     %orig;
     if (model) {
-        // 使用 valueForKey 安全访问私有属性
         AWEAwemePlayInteractionView *interactionView = [self valueForKey:@"_interactionView"];
         updateInteractionViewModel(interactionView, model);
     }
@@ -833,7 +805,6 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     %orig;
     if (model) {
         objc_setAssociatedObject(self, "currentVideoModel", model, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        // 使用 valueForKey 安全访问私有属性
         AWEAwemePlayInteractionView *interactionView = [self valueForKey:@"_interactionView"];
         updateInteractionViewModel(interactionView, model);
     }
@@ -841,7 +812,7 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 %end
 
 // ==========================================
-// 其他杂项功能 (保持原逻辑)
+// 其他杂项
 // ==========================================
 
 %hook TTKProfileRootView
@@ -865,7 +836,6 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 - (void)layoutSubviews {
     %orig;
     if ([BHIManager profileSave]) {
-        // 简单去重
         for (UIGestureRecognizer *g in self.gestureRecognizers) {
             if ([g isKindOfClass:[UILongPressGestureRecognizer class]]) return;
         }
@@ -908,7 +878,7 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 %end
 
 // ==========================================
-// 越狱检测绕过 (合并整理)
+// 越狱检测绕过
 // ==========================================
 
 %hook NSFileManager
@@ -950,9 +920,6 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 +(bool)isJailBroken { return NO; }
 %end
 
-// ==========================================
-// 构造函数
-// ==========================================
 %ctor {
     jailbreakPaths = @[
         @"/Applications/Cydia.app", @"/Applications/blackra1n.app", @"/Applications/FakeCarrier.app", 
