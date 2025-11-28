@@ -2051,43 +2051,84 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 
 // 添加视频信息标签（上传日期和国家）
 %new - (void)addVideoInfoLabels {
-    // 移除旧的标签避免重复叠加
-    [[self viewWithTag:777] removeFromSuperview];
+    // 移除已存在的标签，避免重复添加
+    UIView *existingDateLabel = [self viewWithTag:1001];
+    UIView *existingCountryLabel = [self viewWithTag:1002];
+    if (existingDateLabel) [existingDateLabel removeFromSuperview];
+    if (existingCountryLabel) [existingCountryLabel removeFromSuperview];
     
-    AWEAwemeBaseViewController* rootVC = self.viewController;
+    // 获取视频模型
+    AWEAwemeBaseViewController *rootVC = self.viewController;
+    if (!rootVC || !rootVC.model) {
+        NSLog(@"BHTikTok: Cannot get rootVC or model");
+        return;
+    }
+    
     AWEAwemeModel *model = rootVC.model;
+    NSNumber *createTime = model.createTime;
+    NSString *region = model.region;
     
-    // TikTok 不同版本时间字段适配
-    NSNumber *timestamp = 
-        model.createTime ? model.createTime : 
-        [model valueForKey:@"createTimeFromServer"] ? [model valueForKey:@"createTimeFromServer"] : 
-        [model valueForKey:@"createTimeV2"] ? [model valueForKey:@"createTimeV2"] : 
-        nil;
+    // 改为直接使用父视图的安全布局或其他固定位置作为参考
+    UIView *referenceView = self.safeAreaLayoutGuide.topAnchor;
     
-    if (!timestamp) return;  // 没有上传时间就不显示
+    // 创建并配置日期标签
+    UILabel *uploadDateLabel = [[UILabel alloc] init];
+    uploadDateLabel.tag = 1001;
+    uploadDateLabel.text = [self formattedDateStringFromTimestamp:[createTime doubleValue]];
+    uploadDateLabel.font = [UIFont boldSystemFontOfSize:13.0];
+    uploadDateLabel.textColor = [UIColor whiteColor];
+    uploadDateLabel.translatesAutoresizingMaskIntoConstraints = NO;
     
-    // 转换时间格式
-    NSDate *date = [NSDate dateWithTimeIntervalSince1970:timestamp.doubleValue];
-    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-    formatter.dateFormat = @"yyyy-MM-dd";
-    NSString *dateString = [formatter stringFromDate:date];
+    [self addSubview:uploadDateLabel];
     
-    UILabel *uploadTime = [[UILabel alloc] init];
-    uploadTime.tag = 777;
-    uploadTime.text = [NSString stringWithFormat:@"Uploaded: %@", dateString];
-    uploadTime.textColor = [UIColor whiteColor];
-    uploadTime.font = [UIFont boldSystemFontOfSize:14];
-    uploadTime.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.2];
-    uploadTime.layer.cornerRadius = 6;
-    uploadTime.layer.masksToBounds = YES;
+    UIImageView *clockImage = [[UIImageView alloc] init];
+    clockImage.image = [UIImage systemImageNamed:@"clock"];
+    clockImage.tintColor = [UIColor whiteColor];
+    clockImage.translatesAutoresizingMaskIntoConstraints = NO;
+    [self addSubview:clockImage];
     
-    // 自动尺寸
-    CGSize sz = [uploadTime sizeThatFits:CGSizeMake(CGFLOAT_MAX, 20)];
-    uploadTime.frame = CGRectMake(10, self.bounds.size.height - 60, sz.width + 14, 24);
+    // 使用父视图的顶部进行约束设置
+    [NSLayoutConstraint activateConstraints:@[
+        [clockImage.topAnchor constraintEqualToAnchor:referenceView constant:10],
+        [clockImage.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:4],
+        [clockImage.widthAnchor constraintEqualToConstant:16],
+        [clockImage.heightAnchor constraintEqualToConstant:16],
+        [uploadDateLabel.topAnchor constraintEqualToAnchor:referenceView constant:9],
+        [uploadDateLabel.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:23],
+        [uploadDateLabel.widthAnchor constraintEqualToConstant:200],
+        [uploadDateLabel.heightAnchor constraintEqualToConstant:16]
+    ]];
     
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self addSubview:uploadTime];
-    });
+    // 如果有区域信息，添加区域标签
+    if (region) {
+        UILabel *countryLabel = [[UILabel alloc] init];
+        countryLabel.tag = 1002;
+        countryLabel.font = [UIFont boldSystemFontOfSize:13.0];
+        countryLabel.textColor = [UIColor whiteColor];
+        countryLabel.text = region;
+        countryLabel.translatesAutoresizingMaskIntoConstraints = NO;
+        
+        [self addSubview:countryLabel];
+        
+        // 添加国家图标
+        UIImageView *globeImage = [[UIImageView alloc] init];
+        globeImage.image = [UIImage systemImageNamed:@"globe"];
+        globeImage.tintColor = [UIColor whiteColor];
+        globeImage.translatesAutoresizingMaskIntoConstraints = NO;
+        [self addSubview:globeImage];
+        
+        // 设置约束
+        [NSLayoutConstraint activateConstraints:@[
+            [globeImage.topAnchor constraintEqualToAnchor:uploadDateLabel.bottomAnchor constant:5],
+            [globeImage.leadingAnchor constraintEqualToAnchor:uploadDateLabel.leadingAnchor],
+            [globeImage.widthAnchor constraintEqualToConstant:16],
+            [globeImage.heightAnchor constraintEqualToConstant:16],
+            [countryLabel.topAnchor constraintEqualToAnchor:uploadDateLabel.bottomAnchor constant:5],
+            [countryLabel.leadingAnchor constraintEqualToAnchor:uploadDateLabel.leadingAnchor constant:23],
+            [countryLabel.widthAnchor constraintEqualToConstant:200],
+            [countryLabel.heightAnchor constraintEqualToConstant:16]
+        ]];
+    }
 }
 
 // 格式化日期时间戳为字符串
