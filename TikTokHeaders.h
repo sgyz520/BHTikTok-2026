@@ -46,6 +46,8 @@
 - (UIView *)viewWithTag:(NSInteger)tag;
 - (void)addSubview:(UIView *)view;
 @property(nonatomic, readonly, copy) NSArray<UIView *> *subviews;
+@property(nonatomic, readonly) CGRect bounds;
+- (void)updateWithModel:(AWEAwemeModel *)model;
 @end
 @interface SparkViewController: UIViewController
 @property(nonatomic, strong, readwrite) NSURL *originURL;

@@ -2039,86 +2039,106 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 %end
 
 %hook AWEAwemePlayInteractionView
-- (void)updateWithModel:(AWEAwemeModel *)model {
-    %orig;
-    
-    // 只有在用户启用了视频上传日期显示时才添加标签
-    if (![BHIManager videoUploadDate]) {
-        return;
-    }
-    
-    // 移除旧的时间标签，防止重复
-    [[self viewWithTag:9991] removeFromSuperview];
-    
-    // 获取上传时间
-    NSNumber *ts = model.createTime ? model.createTime : 
-                   [model valueForKey:@"createTimeFromServer"] ? 
-                   [model valueForKey:@"createTimeFromServer"] : 
-                   nil;
-    
-    if (!ts) return;
-    
-    NSDate *date = [NSDate dateWithTimeIntervalSince1970:ts.doubleValue];
-    NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
-    fmt.dateFormat = @"yyyy-MM-dd";
-    NSString *dateStr = [fmt stringFromDate:date];
-    
-    UILabel *timeLabel = [[UILabel alloc] init];
-    timeLabel.tag = 9991;
-    timeLabel.text = [NSString stringWithFormat:@"发布于 %@", dateStr];
-    timeLabel.textColor = [UIColor whiteColor];
-    timeLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightSemibold];
-    timeLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    
-    [self addSubview:timeLabel];
-    
-    // 找到标题标签
-    UILabel *titleLabel = nil;
-    UILabel *descriptionLabel = nil;
-    
-    // 遍历子视图，找到标题和描述
-    for (UIView *sub in self.subviews) {
-        if ([sub isKindOfClass:NSClassFromString(@"AWEAttributionLabel")] || 
-            [sub isKindOfClass:NSClassFromString(@"UILabel")]) {
-            if (!titleLabel) {
-                titleLabel = (UILabel *)sub;  // 标题
-            } else {
-                descriptionLabel = (UILabel *)sub;  // 描述
-            }
-        }
-    }
-    
-    if (!titleLabel) return;
-    
-    // 获取描述信息的高度
-    CGFloat descriptionHeight = descriptionLabel ? [descriptionLabel sizeThatFits:CGSizeMake(self.bounds.size.width - 40, CGFLOAT_MAX)].height : 0;
-    
-    // 上传时间距离标题下方 4 像素
-    CGFloat timeTopMargin = descriptionHeight > 0 ? 4 : 0;  // 如果有描述，时间放在描述下方；没有描述则放在标题下方
-    
-    // 设置上传时间标签的约束
-    [NSLayoutConstraint activateConstraints:@[
-        [timeLabel.topAnchor constraintEqualToAnchor:descriptionLabel ? descriptionLabel.bottomAnchor : titleLabel.bottomAnchor constant:timeTopMargin],
-        [timeLabel.leadingAnchor constraintEqualToAnchor:titleLabel.leadingAnchor],
-    ]];
-    
-    // 播放进度条的上方也需要有足够的间距
-    UIView *progressBar = nil;
-    for (UIView *sub in self.subviews) {
-        if ([sub isKindOfClass:NSClassFromString(@"AWEProgressBar")]) {
-            progressBar = sub;
-            break;
-        }
-    }
-    
-    if (progressBar) {
-        // 设置进度条的位置：上传时间下方，进度条上方
-        [NSLayoutConstraint activateConstraints:@[
-            [progressBar.topAnchor constraintEqualToAnchor:timeLabel.bottomAnchor constant:10],  // 时间下方 10px
-        ]];
-    }
-}
-%end
+ 
+ - (void)updateWithModel:(AWEAwemeModel *)model { 
+ 
+     %orig; 
+ 
+     // 清理旧的 
+     [[self viewWithTag:42006] removeFromSuperview]; 
+ 
+     // ================ 
+     // 1. 获取上传时间 
+     // ================ 
+     NSNumber *ts = model.createTime ?: [model valueForKey:@"createTimeFromServer"]; 
+     if (!ts) return; 
+ 
+     NSDate *date = [NSDate dateWithTimeIntervalSince1970:ts.doubleValue]; 
+     NSDateFormatter *fmt = [[NSDateFormatter alloc] init]; 
+     fmt.dateFormat = @"yyyy-MM-dd HH:mm";   // ← 你要的格式 
+     NSString *dateStr = [fmt stringFromDate:date]; 
+ 
+     // ================ 
+     // 2. 获取 IP 属地 
+     // ================ 
+     NSString *ipStr = nil; 
+ 
+     if ([model respondsToSelector:@selector(region)]) { 
+         ipStr = model.region;    // 通常是 CN、JP、US 
+     } 
+ 
+     if (!ipStr || ipStr.length == 0) { 
+         ipStr = @"未知"; 
+     } 
+ 
+     // 中文显示（CN→中国） 
+     NSDictionary *map = @{ 
+         @"CN":@"中国", 
+         @"TW":@"中国台湾", 
+         @"HK":@"中国香港", 
+         @"US":@"美国", 
+         @"JP":@"日本", 
+         @"KR":@"韩国", 
+     }; 
+ 
+     if (map[ipStr]) ipStr = map[ipStr]; 
+ 
+     // ================ 
+     // 3. 创建组合标签 
+     // ================ 
+     UILabel *label = [[UILabel alloc] init]; 
+     label.tag = 42006; 
+     label.font = [UIFont systemFontOfSize:13 weight:UIFontWeightSemibold]; 
+     label.textColor = [UIColor colorWithWhite:1 alpha:0.92]; 
+     label.translatesAutoresizingMaskIntoConstraints = NO; 
+ 
+     // ★★ 组合成你要的样式 ★★ 
+     label.text = [NSString stringWithFormat:@"IP %@  %@", ipStr, dateStr]; 
+ 
+     [self addSubview:label]; 
+ 
+     // ================ 
+     // 4. 找到描述 label 
+     // ================ 
+     UILabel *descLabel = nil; 
+ 
+     for (UIView *sub in self.subviews) { 
+         if ([NSStringFromClass([sub class]) containsString:@"Desc"] || 
+             [NSStringFromClass([sub class]) containsString:@"desc"]) { 
+             descLabel = (UILabel *)sub; 
+         } 
+     } 
+ 
+     if (!descLabel) return; 
+ 
+     // ================ 
+     // 5. 找进度条 
+     // ================ 
+     UIView *progressBar = nil; 
+     for (UIView *sub in self.subviews) { 
+         if ([sub isKindOfClass:NSClassFromString(@"AWEProgressBar")]) { 
+             progressBar = sub; 
+             break; 
+         } 
+     } 
+ 
+     // ================ 
+     // 6. 布局（描述下方） 
+     // ================ 
+     [NSLayoutConstraint activateConstraints:@[ 
+         [label.topAnchor constraintEqualToAnchor:descLabel.bottomAnchor constant:6], 
+         [label.leadingAnchor constraintEqualToAnchor:descLabel.leadingAnchor] 
+     ]]; 
+ 
+     // 防止挡住进度条 
+     if (progressBar) { 
+         [NSLayoutConstraint activateConstraints:@[ 
+             [progressBar.topAnchor constraintGreaterThanOrEqualToAnchor:label.bottomAnchor constant:10] 
+         ]]; 
+     } 
+ } 
+ 
+ %end
 
 %hook TTKStoryDetailTableViewCell
     // TODO...
