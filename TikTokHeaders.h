@@ -41,6 +41,12 @@
 - (void)addSubview:(id)arg1;
 - (NSString *)emojiForCountryCode:(NSString *)countryCode;
 @end
+
+@interface AWEAwemePlayInteractionView: UIView
+- (UIView *)viewWithTag:(NSInteger)tag;
+- (void)addSubview:(UIView *)view;
+@property(nonatomic, readonly, copy) NSArray<UIView *> *subviews;
+@end
 @interface SparkViewController: UIViewController
 @property(nonatomic, strong, readwrite) NSURL *originURL;
 - (void)didTapCloseButton;
