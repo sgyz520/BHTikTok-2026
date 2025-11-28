@@ -75,13 +75,7 @@ _Pragma("clang diagnostic pop")
 // 辅助函数
 // ==========================================
 
-static UIViewController *topMostController() {
-    UIViewController *topController = [UIApplication sharedApplication].keyWindow.rootViewController;
-    while (topController.presentedViewController) {
-        topController = topController.presentedViewController;
-    }
-    return topController;
-}
+// topMostController函数已在TikTokHeaders.h中定义，此处不再重复定义
 
 static void showAlert(NSString *title, NSString *message, NSString *okTitle, NSString *cancelTitle, void (^okHandler)(void)) {
     dispatch_async(dispatch_get_main_queue(), ^{
