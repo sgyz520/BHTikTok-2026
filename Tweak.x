@@ -1812,16 +1812,14 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     }
     if ([BHIManager hideElementButton]) {
         [self addHideElementButton];
-        // 如果全局隐藏状态为true，则延迟应用隐藏状态，确保视图完全加载后再应用
-        if (globalElementsHidden) {
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                AWEAwemeBaseViewController *rootVC = self.viewController;
-                if ([rootVC.interactionController isKindOfClass:%c(TTKFeedInteractionLegacyMainContainerElement)]) {
-                    TTKFeedInteractionLegacyMainContainerElement *interactionController = rootVC.interactionController;
-                    [interactionController hideAllElements:true exceptArray:nil];
-                }
-            });
-        }
+        // 根据全局隐藏状态应用相应的显示/隐藏状态，确保视图完全加载后再应用
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            AWEAwemeBaseViewController *rootVC = self.viewController;
+            if ([rootVC.interactionController isKindOfClass:%c(TTKFeedInteractionLegacyMainContainerElement)]) {
+                TTKFeedInteractionLegacyMainContainerElement *interactionController = rootVC.interactionController;
+                [interactionController hideAllElements:globalElementsHidden exceptArray:nil];
+            }
+        });
     }
     if ([BHIManager videoUploadDate] || [BHIManager uploadRegion]) {
         [self addVideoInfoLabels];
@@ -1836,16 +1834,14 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     }
     if ([BHIManager hideElementButton]) {
         [self addHideElementButton];
-        // 如果全局隐藏状态为true，则延迟应用隐藏状态，确保视图完全加载后再应用
-        if (globalElementsHidden) {
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                AWEAwemeBaseViewController *rootVC = self.viewController;
-                if ([rootVC.interactionController isKindOfClass:%c(TTKFeedInteractionLegacyMainContainerElement)]) {
-                    TTKFeedInteractionLegacyMainContainerElement *interactionController = rootVC.interactionController;
-                    [interactionController hideAllElements:true exceptArray:nil];
-                }
-            });
-        }
+        // 根据全局隐藏状态应用相应的显示/隐藏状态，确保视图完全加载后再应用
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            AWEAwemeBaseViewController *rootVC = self.viewController;
+            if ([rootVC.interactionController isKindOfClass:%c(TTKFeedInteractionLegacyMainContainerElement)]) {
+                TTKFeedInteractionLegacyMainContainerElement *interactionController = rootVC.interactionController;
+                [interactionController hideAllElements:globalElementsHidden exceptArray:nil];
+            }
+        });
     }
     if ([BHIManager videoUploadDate] || [BHIManager uploadRegion]) {
         [self addVideoInfoLabels];
@@ -2092,34 +2088,42 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
         UILabel *uploadDateLabel = [[UILabel alloc] init];
         uploadDateLabel.tag = 1001;
         uploadDateLabel.text = [self formattedDateStringFromTimestamp:[createTime doubleValue]];
-        uploadDateLabel.font = [UIFont systemFontOfSize:12];
+        uploadDateLabel.font = [UIFont boldSystemFontOfSize:13.0];
         uploadDateLabel.textColor = [UIColor whiteColor];
         uploadDateLabel.translatesAutoresizingMaskIntoConstraints = NO;
         
-        // 添加时钟图标
-        NSTextAttachment *clockAttachment = [[NSTextAttachment alloc] init];
-        clockAttachment.image = [UIImage systemImageNamed:@"clock"];
-        NSAttributedString *clockIcon = [NSAttributedString attributedStringWithAttachment:clockAttachment];
-        NSMutableAttributedString *dateText = [[NSMutableAttributedString alloc] initWithAttributedString:clockIcon];
-        [dateText appendAttributedString:[[NSAttributedString alloc] initWithString:@" "]];
-        [dateText appendAttributedString:[[NSAttributedString alloc] initWithString:uploadDateLabel.text]];
-        uploadDateLabel.attributedText = dateText;
-        
         [self addSubview:uploadDateLabel];
+        
+        // 添加时钟图标
+        UIImageView *clockImage = [[UIImageView alloc] init];
+        clockImage.image = [UIImage systemImageNamed:@"clock"];
+        clockImage.tintColor = [UIColor whiteColor];
+        clockImage.translatesAutoresizingMaskIntoConstraints = NO;
+        [self addSubview:clockImage];
         
         // 设置约束 - 基于用户名按钮位置
         if (usernameButton) {
             [NSLayoutConstraint activateConstraints:@[
-                [uploadDateLabel.topAnchor constraintEqualToAnchor:usernameButton.bottomAnchor constant:10], // 用户名下方空一行
-                [uploadDateLabel.leadingAnchor constraintEqualToAnchor:usernameButton.leadingAnchor],
-                [uploadDateLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.trailingAnchor constant:-20]
+                [clockImage.topAnchor constraintEqualToAnchor:usernameButton.bottomAnchor constant:10],
+                [clockImage.leadingAnchor constraintEqualToAnchor:usernameButton.leadingAnchor],
+                [clockImage.widthAnchor constraintEqualToConstant:16],
+                [clockImage.heightAnchor constraintEqualToConstant:16],
+                [uploadDateLabel.topAnchor constraintEqualToAnchor:usernameButton.bottomAnchor constant:9],
+                [uploadDateLabel.leadingAnchor constraintEqualToAnchor:usernameButton.leadingAnchor constant:23],
+                [uploadDateLabel.widthAnchor constraintEqualToConstant:200],
+                [uploadDateLabel.heightAnchor constraintEqualToConstant:16]
             ]];
         } else {
             // 如果找不到用户名按钮，使用默认位置
             [NSLayoutConstraint activateConstraints:@[
-                [uploadDateLabel.topAnchor constraintEqualToAnchor:self.topAnchor constant:120],
-                [uploadDateLabel.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:10],
-                [uploadDateLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.trailingAnchor constant:-20]
+                [clockImage.topAnchor constraintEqualToAnchor:self.topAnchor constant:120],
+                [clockImage.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:4],
+                [clockImage.widthAnchor constraintEqualToConstant:16],
+                [clockImage.heightAnchor constraintEqualToConstant:16],
+                [uploadDateLabel.topAnchor constraintEqualToAnchor:self.topAnchor constant:119],
+                [uploadDateLabel.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:23],
+                [uploadDateLabel.widthAnchor constraintEqualToConstant:200],
+                [uploadDateLabel.heightAnchor constraintEqualToConstant:16]
             ]];
         }
     }
@@ -2128,45 +2132,59 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
     if ([BHIManager uploadRegion] && region) {
         UILabel *countryLabel = [[UILabel alloc] init];
         countryLabel.tag = 1002;
-        countryLabel.font = [UIFont systemFontOfSize:12];
+        countryLabel.font = [UIFont boldSystemFontOfSize:13.0];
         countryLabel.textColor = [UIColor whiteColor];
         countryLabel.translatesAutoresizingMaskIntoConstraints = NO;
         
         // 使用文字显示地区而不是国旗emoji
         NSString *countryText = [NSString stringWithFormat:@"%@", region];
-        
-        // 添加地球图标
-        NSTextAttachment *globeAttachment = [[NSTextAttachment alloc] init];
-        globeAttachment.image = [UIImage systemImageNamed:@"globe"];
-        NSAttributedString *globeIcon = [NSAttributedString attributedStringWithAttachment:globeAttachment];
-        NSMutableAttributedString *regionText = [[NSMutableAttributedString alloc] initWithAttributedString:globeIcon];
-        [regionText appendAttributedString:[[NSAttributedString alloc] initWithString:@" "]];
-        [regionText appendAttributedString:[[NSAttributedString alloc] initWithString:countryText]];
-        countryLabel.attributedText = regionText;
+        countryLabel.text = countryText;
         
         [self addSubview:countryLabel];
+        
+        // 添加地球图标
+        UIImageView *globeImage = [[UIImageView alloc] init];
+        globeImage.image = [UIImage systemImageNamed:@"globe"];
+        globeImage.tintColor = [UIColor whiteColor];
+        globeImage.translatesAutoresizingMaskIntoConstraints = NO;
+        [self addSubview:globeImage];
         
         // 设置约束 - 基于日期标签位置
         UIView *dateLabel = [self viewWithTag:1001];
         if (dateLabel) {
             [NSLayoutConstraint activateConstraints:@[
-                [countryLabel.topAnchor constraintEqualToAnchor:dateLabel.bottomAnchor constant:10], // 日期下方空一行
+                [globeImage.topAnchor constraintEqualToAnchor:dateLabel.bottomAnchor constant:10],
+                [globeImage.leadingAnchor constraintEqualToAnchor:dateLabel.leadingAnchor constant:-19],
+                [globeImage.widthAnchor constraintEqualToConstant:16],
+                [globeImage.heightAnchor constraintEqualToConstant:16],
+                [countryLabel.topAnchor constraintEqualToAnchor:dateLabel.bottomAnchor constant:9],
                 [countryLabel.leadingAnchor constraintEqualToAnchor:dateLabel.leadingAnchor],
-                [countryLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.trailingAnchor constant:-20]
+                [countryLabel.widthAnchor constraintEqualToConstant:200],
+                [countryLabel.heightAnchor constraintEqualToConstant:16]
             ]];
         } else if (usernameButton) {
             // 如果没有日期标签但有用户名按钮，直接放在用户名下方
             [NSLayoutConstraint activateConstraints:@[
-                [countryLabel.topAnchor constraintEqualToAnchor:usernameButton.bottomAnchor constant:10], // 用户名下方空一行
-                [countryLabel.leadingAnchor constraintEqualToAnchor:usernameButton.leadingAnchor],
-                [countryLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.trailingAnchor constant:-20]
+                [globeImage.topAnchor constraintEqualToAnchor:usernameButton.bottomAnchor constant:10],
+                [globeImage.leadingAnchor constraintEqualToAnchor:usernameButton.leadingAnchor],
+                [globeImage.widthAnchor constraintEqualToConstant:16],
+                [globeImage.heightAnchor constraintEqualToConstant:16],
+                [countryLabel.topAnchor constraintEqualToAnchor:usernameButton.bottomAnchor constant:9],
+                [countryLabel.leadingAnchor constraintEqualToAnchor:usernameButton.leadingAnchor constant:23],
+                [countryLabel.widthAnchor constraintEqualToConstant:200],
+                [countryLabel.heightAnchor constraintEqualToConstant:16]
             ]];
         } else {
             // 如果都找不到，使用默认位置
             [NSLayoutConstraint activateConstraints:@[
-                [countryLabel.topAnchor constraintEqualToAnchor:self.topAnchor constant:150],
-                [countryLabel.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:10],
-                [countryLabel.trailingAnchor constraintLessThanOrEqualToAnchor:self.trailingAnchor constant:-20]
+                [globeImage.topAnchor constraintEqualToAnchor:self.topAnchor constant:150],
+                [globeImage.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:4],
+                [globeImage.widthAnchor constraintEqualToConstant:16],
+                [globeImage.heightAnchor constraintEqualToConstant:16],
+                [countryLabel.topAnchor constraintEqualToAnchor:self.topAnchor constant:149],
+                [countryLabel.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:23],
+                [countryLabel.widthAnchor constraintEqualToConstant:200],
+                [countryLabel.heightAnchor constraintEqualToConstant:16]
             ]];
         }
     }
@@ -2175,9 +2193,9 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 // 格式化日期时间戳为字符串
 %new - (NSString *)formattedDateStringFromTimestamp:(NSTimeInterval)timestamp {
     NSDate *date = [NSDate dateWithTimeIntervalSince1970:timestamp];
-    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-    formatter.dateFormat = @"yyyy-MM-dd HH:mm";
-    return [formatter stringFromDate:date];
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    dateFormatter.dateFormat = @"yyyy-MM-dd";
+    return [dateFormatter stringFromDate:date];
 }
 
 // 根据地区名称获取国家代码
