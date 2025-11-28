@@ -1291,14 +1291,28 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
                 locationInfo = getCountryNameForCode(countryID);
             }
             
+            // 获取上传时间
+            NSNumber *ts = model.createTime ?: [model valueForKey:@"createTimeFromServer"];
+            NSString *dateStr = @"";
+            if (ts) {
+                NSDate *date = [NSDate dateWithTimeIntervalSince1970:ts.doubleValue];
+                NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
+                fmt.dateFormat = @"yyyy-MM-dd HH:mm";
+                dateStr = [fmt stringFromDate:date];
+            }
+            
             // 检查位置信息是否有效
             if (!locationInfo || locationInfo.length == 0) {
                 return;
             }
             
-            // 创建IP属地标签，考虑不同屏幕尺寸
+            // 创建IP属地和上传时间标签，考虑不同屏幕尺寸
             UILabel *uploadLabel = [[UILabel alloc] init];
-            uploadLabel.text = [NSString stringWithFormat:@"%@ •",locationInfo];
+            if (dateStr.length > 0) {
+                uploadLabel.text = [NSString stringWithFormat:@"%@ • %@", locationInfo, dateStr];
+            } else {
+                uploadLabel.text = [NSString stringWithFormat:@"%@ •", locationInfo];
+            }
             uploadLabel.tag = 666;
             
             // 设置字体和样式
@@ -1337,7 +1351,7 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
             CGFloat labelHeight = 20.5; // 固定高度
             
             // 确保标签不会超出父视图边界
-            CGFloat maxWidth = self.bounds.size.width * 0.3; // 最大宽度为父视图宽度的30%
+            CGFloat maxWidth = self.bounds.size.width * 0.4; // 最大宽度为父视图宽度的40%，因为现在包含了时间
             if (labelWidth > maxWidth) {
                 labelWidth = maxWidth;
                 uploadLabel.numberOfLines = 1;
