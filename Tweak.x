@@ -2053,14 +2053,35 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 
 %hook AWEAwemePlayInteractionView
  
- - (void)updateWithModel:(AWEAwemeModel *)model { 
- 
+ - (void)layoutSubviews { 
      %orig; 
      
      // 检查是否需要显示视频上传时间
      if (![BHIManager videoUploadDate]) {
          return;
      }
+     
+     // 获取当前视频模型 - 尝试多种方式
+     AWEAwemeModel *model = nil;
+     
+     // 方法1: 尝试从父视图控制器获取
+     UIViewController *vc = [self yy_viewController];
+     if ([vc respondsToSelector:@selector(model)]) {
+         model = [vc model];
+     }
+     
+     // 方法2: 尝试从关联对象获取
+     if (!model) {
+         model = objc_getAssociatedObject(self, "currentVideoModel");
+     }
+     
+     // 方法3: 尝试从全局变量获取（如果有）
+     if (!model) {
+         // 这里可以尝试获取当前播放的视频模型
+         // 可能需要根据实际情况调整
+     }
+     
+     if (!model) return;
  
      // 清理旧的 
      [[self viewWithTag:42006] removeFromSuperview]; 
@@ -2084,6 +2105,10 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
      label.font = [UIFont systemFontOfSize:13 weight:UIFontWeightSemibold]; 
      label.textColor = [UIColor colorWithWhite:1 alpha:0.92]; 
      label.translatesAutoresizingMaskIntoConstraints = NO; 
+     label.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.5]; // 添加半透明背景
+     label.layer.cornerRadius = 4; // 添加圆角
+     label.clipsToBounds = YES;
+     label.textAlignment = NSTextAlignmentCenter; // 居中对齐
  
      // ★★ 只显示上传时间 ★★ 
      label.text = [NSString stringWithFormat:@"上传时间: %@", dateStr]; 
@@ -2105,18 +2130,22 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
      // 4. 布局（进度条上方） 
      // ================ 
      // 使用延迟执行确保布局完成
-     dispatch_async(dispatch_get_main_queue(), ^{
+     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
          if (progressBar) {
              // 在进度条上方显示
              [NSLayoutConstraint activateConstraints:@[ 
                  [label.bottomAnchor constraintEqualToAnchor:progressBar.topAnchor constant:-8], 
-                 [label.leadingAnchor constraintEqualToAnchor:progressBar.leadingAnchor] 
+                 [label.leadingAnchor constraintEqualToAnchor:progressBar.leadingAnchor],
+                 [label.heightAnchor constraintEqualToConstant:24],
+                 [label.widthAnchor constraintEqualToConstant:200]
              ]]; 
          } else {
              // 如果没有进度条，显示在底部
              [NSLayoutConstraint activateConstraints:@[
                  [label.bottomAnchor constraintLessThanOrEqualToAnchor:self.bottomAnchor constant:-10],
-                 [label.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:10]
+                 [label.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:10],
+                 [label.heightAnchor constraintEqualToConstant:24],
+                 [label.widthAnchor constraintEqualToConstant:200]
              ]];
          }
      });
@@ -2217,6 +2246,248 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
 %hook IESLiveDeviceInfo
 +(bool)isJailBroken {
 	return NO;
+}
+%end
+
+// 全局变量，用于跟踪当前播放的视频模型
+static AWEAwemeModel *currentPlayingVideoModel = nil;
+
+// 定时器，用于定期检查和更新视频模型
+static NSTimer *modelUpdateTimer = nil;
+
+// 辅助函数：获取当前视频模型
+static AWEAwemeModel *getCurrentVideoModel(UIView *view) {
+    // 方法1: 从关联对象获取
+    AWEAwemeModel *model = objc_getAssociatedObject(view, "currentVideoModel");
+    if (model) return model;
+    
+    // 方法2: 从父视图控制器获取
+    UIViewController *vc = [view yy_viewController];
+    if (vc) {
+        if ([vc respondsToSelector:@selector(currentAwemeModel)]) {
+            model = [vc currentAwemeModel];
+        } else if ([vc respondsToSelector:@selector(model)]) {
+            model = [vc model];
+        } else {
+            // 尝试从视图控制器的关联对象获取
+            model = objc_getAssociatedObject(vc, "currentVideoModel");
+        }
+    }
+    
+    // 方法3: 从全局变量获取
+    if (!model) {
+        model = currentPlayingVideoModel;
+    }
+    
+    return model;
+}
+
+// 辅助函数：设置当前视频模型
+static void setCurrentVideoModel(AWEAwemeModel *model) {
+    if (model != currentPlayingVideoModel) {
+        currentPlayingVideoModel = model;
+        
+        // 如果定时器未运行，启动定时器
+        if (!modelUpdateTimer && [BHIManager videoUploadDate]) {
+            modelUpdateTimer = [NSTimer scheduledTimerWithTimeInterval:1.0
+                                                               target:[[NSObject alloc] init]
+                                                             selector:@selector(updateVideoModels)
+                                                             userInfo:nil
+                                                              repeats:YES];
+        }
+    }
+}
+
+// 定时器回调函数，用于定期检查和更新视频模型
+%hook NSObject
+- (void)updateVideoModels {
+    // 查找所有可见的AWEAwemePlayInteractionView
+    NSArray *windows = [UIApplication sharedApplication].windows;
+    for (UIWindow *window in windows) {
+        [self findAndUpdateInteractionViews:window];
+    }
+}
+
+- (void)findAndUpdateInteractionViews:(UIView *)view {
+    // 检查当前视图是否是AWEAwemePlayInteractionView
+    if ([view isKindOfClass:%c(AWEAwemePlayInteractionView)]) {
+        AWEAwemePlayInteractionView *interactionView = (AWEAwemePlayInteractionView *)view;
+        
+        // 尝试获取视频模型
+        AWEAwemeModel *model = getCurrentVideoModel(interactionView);
+        
+        if (model) {
+            // 将模型保存为关联对象
+            objc_setAssociatedObject(interactionView, "currentVideoModel", model, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            
+            // 触发重新布局
+            [interactionView setNeedsLayout];
+        }
+    }
+    
+    // 递归检查子视图
+    for (UIView *subview in view.subviews) {
+        [self findAndUpdateInteractionViews:subview];
+    }
+}
+%end
+
+%ctor {
+    // 初始化代码
+}
+
+// 新增：尝试捕获视频播放视图控制器的视频模型
+%hook AWEVideoPlayViewController
+- (void)setCurrentAwemeModel:(AWEAwemeModel *)model {
+    %orig;
+    if (model) {
+        // 设置全局变量
+        setCurrentVideoModel(model);
+        
+        // 将模型保存为关联对象到播放交互视图
+        AWEAwemePlayInteractionView *interactionView = [self valueForKey:@"_interactionView"];
+        if (interactionView) {
+            objc_setAssociatedObject(interactionView, "currentVideoModel", model, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            
+            // 如果需要显示上传时间，触发重新布局
+            if ([BHIManager videoUploadDate]) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [interactionView setNeedsLayout];
+                });
+            }
+        }
+        
+        // 也保存到视图控制器本身
+        objc_setAssociatedObject(self, "currentVideoModel", model, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
+}
+%end
+
+// 新增：尝试从其他可能的方法获取视频模型
+%hook AWEAwemePlayInteractionView
+- (void)didMoveToWindow {
+    %orig;
+    
+    // 检查是否需要显示视频上传时间
+    if (![BHIManager videoUploadDate]) {
+        return;
+    }
+    
+    // 使用辅助函数获取视频模型
+    AWEAwemeModel *model = getCurrentVideoModel(self);
+    
+    if (model) {
+        // 将模型保存为关联对象
+        objc_setAssociatedObject(self, "currentVideoModel", model, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        
+        // 触发重新布局
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self setNeedsLayout];
+        });
+    }
+}
+
+// 尝试从视频播放器获取视频模型
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    %orig;
+    
+    // 检查是否需要显示视频上传时间
+    if (![BHIManager videoUploadDate]) {
+        return;
+    }
+    
+    // 使用辅助函数获取视频模型
+    AWEAwemeModel *model = getCurrentVideoModel(self);
+    
+    if (model) {
+        // 将模型保存为关联对象
+        objc_setAssociatedObject(self, "currentVideoModel", model, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        
+        // 触发重新布局
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self setNeedsLayout];
+        });
+    }
+}
+%end
+
+// 新增：尝试从视频播放器获取视频模型
+%hook AWEVideoPlayerController
+- (void)setModel:(AWEAwemeModel *)model {
+    %orig;
+    if (model) {
+        // 设置全局变量
+        setCurrentVideoModel(model);
+        
+        // 尝试获取播放交互视图并设置模型
+        AWEAwemePlayInteractionView *interactionView = [self valueForKey:@"_interactionView"];
+        if (interactionView) {
+            objc_setAssociatedObject(interactionView, "currentVideoModel", model, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            
+            // 如果需要显示上传时间，触发重新布局
+            if ([BHIManager videoUploadDate]) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [interactionView setNeedsLayout];
+                });
+            }
+        }
+    }
+}
+%end
+
+// 新增：尝试从视频播放视图获取视频模型
+%hook AWEVideoPlayerView
+- (void)setModel:(AWEAwemeModel *)model {
+    %orig;
+    if (model) {
+        // 设置全局变量
+        setCurrentVideoModel(model);
+        
+        // 尝试获取父视图中的播放交互视图
+        UIView *parentView = self.superview;
+        while (parentView) {
+            if ([parentView isKindOfClass:%c(AWEAwemePlayInteractionView)]) {
+                AWEAwemePlayInteractionView *interactionView = (AWEAwemePlayInteractionView *)parentView;
+                objc_setAssociatedObject(interactionView, "currentVideoModel", model, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+                
+                // 如果需要显示上传时间，触发重新布局
+                if ([BHIManager videoUploadDate]) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [interactionView setNeedsLayout];
+                    });
+                }
+                break;
+            }
+            parentView = parentView.superview;
+        }
+    }
+}
+%end
+
+// 新增：尝试从视频详情页面获取视频模型
+%hook AWEVideoDetailViewController
+- (void)setCurrentAwemeModel:(AWEAwemeModel *)model {
+    %orig;
+    if (model) {
+        // 设置全局变量
+        setCurrentVideoModel(model);
+        
+        // 保存到视图控制器
+        objc_setAssociatedObject(self, "currentVideoModel", model, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        
+        // 尝试获取播放交互视图并设置模型
+        AWEAwemePlayInteractionView *interactionView = [self valueForKey:@"_interactionView"];
+        if (interactionView) {
+            objc_setAssociatedObject(interactionView, "currentVideoModel", model, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            
+            // 如果需要显示上传时间，触发重新布局
+            if ([BHIManager videoUploadDate]) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [interactionView setNeedsLayout];
+                });
+            }
+        }
+    }
 }
 %end
 
