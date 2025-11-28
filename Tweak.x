@@ -1292,14 +1292,7 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
             }
             
             // 获取上传时间（不再显示在作者名字后面）
-            NSNumber *ts = model.createTime ?: [model valueForKey:@"createTimeFromServer"];
-            NSString *dateStr = @"";
-            if (ts) {
-                NSDate *date = [NSDate dateWithTimeIntervalSince1970:ts.doubleValue];
-                NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
-                fmt.dateFormat = @"yyyy-MM-dd HH:mm";
-                dateStr = [fmt stringFromDate:date];
-            }
+            // 已移除上传时间显示，只保留IP属地
             
             // 检查位置信息是否有效
             if (!locationInfo || locationInfo.length == 0) {
