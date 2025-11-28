@@ -2091,40 +2091,7 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
      [self addSubview:label]; 
  
      // ================ 
-     // 4. 找到描述 label 
-     // ================ 
-     UILabel *descLabel = nil; 
-     UIView *referenceView = nil;
-     
-     // 尝试多种方式查找描述标签
-     for (UIView *sub in self.subviews) { 
-         if ([NSStringFromClass([sub class]) containsString:@"Desc"] || 
-             [NSStringFromClass([sub class]) containsString:@"desc"] ||
-             [NSStringFromClass([sub class]) containsString:@"Label"]) { 
-             descLabel = (UILabel *)sub; 
-             referenceView = sub;
-             break;
-         } 
-     }
-     
-     // 如果找不到描述标签，尝试查找其他可能的视图作为参考
-     if (!descLabel) {
-         for (UIView *sub in self.subviews) {
-             if ([sub isKindOfClass:[UILabel class]]) {
-                 descLabel = (UILabel *)sub;
-                 referenceView = sub;
-                 break;
-             }
-         }
-     }
-     
-     // 如果仍然找不到，使用父视图作为参考
-     if (!referenceView) {
-         referenceView = self;
-     }
-
-     // ================ 
-     // 5. 找进度条 
+     // 3. 找进度条 
      // ================ 
      UIView *progressBar = nil; 
      for (UIView *sub in self.subviews) { 
@@ -2132,27 +2099,24 @@ static NSString *getCountryNameForCode(NSString *countryCode) {
              progressBar = sub; 
              break; 
          } 
-     } 
- 
+     }
+     
      // ================ 
-     // 6. 布局（描述下方） 
+     // 4. 布局（进度条上方） 
      // ================ 
      // 使用延迟执行确保布局完成
      dispatch_async(dispatch_get_main_queue(), ^{
-         [NSLayoutConstraint activateConstraints:@[ 
-             [label.topAnchor constraintEqualToAnchor:referenceView.bottomAnchor constant:6], 
-             [label.leadingAnchor constraintEqualToAnchor:referenceView.leadingAnchor] 
-         ]]; 
-         
-         // 防止挡住进度条 
-         if (progressBar) { 
+         if (progressBar) {
+             // 在进度条上方显示
              [NSLayoutConstraint activateConstraints:@[ 
-                 [progressBar.topAnchor constraintGreaterThanOrEqualToAnchor:label.bottomAnchor constant:10] 
+                 [label.bottomAnchor constraintEqualToAnchor:progressBar.topAnchor constant:-8], 
+                 [label.leadingAnchor constraintEqualToAnchor:progressBar.leadingAnchor] 
              ]]; 
          } else {
-             // 如果没有进度条，设置底部约束
+             // 如果没有进度条，显示在底部
              [NSLayoutConstraint activateConstraints:@[
-                 [label.bottomAnchor constraintLessThanOrEqualToAnchor:self.bottomAnchor constant:-10]
+                 [label.bottomAnchor constraintLessThanOrEqualToAnchor:self.bottomAnchor constant:-10],
+                 [label.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:10]
              ]];
          }
      });
