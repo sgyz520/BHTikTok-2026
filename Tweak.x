@@ -5,6 +5,22 @@ NSArray *jailbreakPaths;
 // 全局变量来跟踪隐藏状态，确保在视频切换时保持状态
 static BOOL globalElementsHidden = NO;
 
+// 添加方法声明以解决编译错误
+@interface UIViewController (BHTikTokAdditions)
+- (AWEAwemeModel *)model;
+- (AWEAwemeModel *)currentAwemeModel;
+@end
+
+@interface NSObject (BHTikTokAdditions)
+- (void)findAndUpdateInteractionViews:(UIView *)view;
+- (void)updateVideoModels;
+@end
+
+// 前向声明类以解决编译错误
+@class AWEVideoPlayViewController;
+@class AWEVideoPlayerController;
+@class AWEAwemePlayInteractionView;
+
 static void showAlert(NSString *title, NSString *message, NSString *okTitle, NSString *cancelTitle, void (^okHandler)(void)) {
   Class alertViewClass = NSClassFromString(@"AWEUIAlertView");
   if (alertViewClass && [alertViewClass respondsToSelector:@selector(showAlertWithTitle:description:image:actionButtonTitle:cancelButtonTitle:actionBlock:cancelBlock:)]) {
