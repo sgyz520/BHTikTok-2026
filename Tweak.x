@@ -390,13 +390,15 @@ static BOOL isAuthenticationShowed = FALSE;
 }
 %end
 
-%hook AWEPlayInteractionAuthorView
-%new - (NSString *)formattedDateStringFromTimestamp:(NSTimeInterval)timestamp {
+// 全局函数：格式化时间戳为日期字符串
+static NSString *formattedDateStringFromTimestamp(NSTimeInterval timestamp) {
     NSDate *date = [NSDate dateWithTimeIntervalSince1970:timestamp];
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     dateFormatter.dateFormat = @"yyyy-MM-dd"; 
     return [dateFormatter stringFromDate:date];
 }
+
+%hook AWEPlayInteractionAuthorView
 - (NSString *)emojiForCountryCode:(NSString *)countryCode {
     if ([BHIManager uploadRegion]) {
         NSDictionary *selectedRegion = [BHIManager selectedRegion];
@@ -408,7 +410,7 @@ static BOOL isAuthenticationShowed = FALSE;
                 AWEFeedCellViewController* rootVC = self.yy_viewController;
                 AWEAwemeModel *model = rootVC.model;
                 NSNumber *createTime = [model createTime];
-                NSString *formattedDate = [self formattedDateStringFromTimestamp:[createTime doubleValue]];
+                NSString *formattedDate = formattedDateStringFromTimestamp([createTime doubleValue]);
                 return [NSString stringWithFormat:@"%@ • %@", countryName, formattedDate];
             }
             return countryName;
