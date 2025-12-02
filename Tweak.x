@@ -1351,22 +1351,25 @@ static BOOL isAuthenticationShowed = FALSE;
     }
 }
 %new - (void)addDownloadButton {
+    // 先检查是否已存在下载按钮
+    if ([self viewWithTag:998]) {
+        return; // 如果已存在，直接返回
+    }
+    
     UIButton *downloadButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [downloadButton setTag:998];
     [downloadButton setTranslatesAutoresizingMaskIntoConstraints:false];
     [downloadButton addTarget:self action:@selector(downloadButtonHandler:) forControlEvents:UIControlEventTouchUpInside];
     [downloadButton setImage:[UIImage systemImageNamed:@"arrow.down.circle.fill"] forState:UIControlStateNormal];
-    if (![self viewWithTag:998]) {
-        [downloadButton setTintColor:[UIColor whiteColor]];
-        [self addSubview:downloadButton];
+    [downloadButton setTintColor:[UIColor whiteColor]];
+    [self addSubview:downloadButton];
 
-        [NSLayoutConstraint activateConstraints:@[
-            [downloadButton.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:90],
-            [downloadButton.trailingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.trailingAnchor constant:-10],
-            [downloadButton.widthAnchor constraintEqualToConstant:40],
-            [downloadButton.heightAnchor constraintEqualToConstant:40],
-        ]];
-    }
+    [NSLayoutConstraint activateConstraints:@[
+        [downloadButton.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:90],
+        [downloadButton.trailingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.trailingAnchor constant:-10],
+        [downloadButton.widthAnchor constraintEqualToConstant:40],
+        [downloadButton.heightAnchor constraintEqualToConstant:40],
+    ]];
 }
 %new - (void)downloadHDVideo:(AWEAwemeBaseViewController *)rootVC {
     NSString *as = rootVC.model.itemID;
@@ -1588,6 +1591,60 @@ static BOOL isAuthenticationShowed = FALSE;
         UIMenu *copyMenu = [UIMenu menuWithTitle:@"Copy Menu"
                                         children:@[action3, action4, action5]];
         UIMenu *mainMenu = [UIMenu menuWithTitle:@"" children:@[PhotosMenu, downloadMenu, copyMenu]];
+        [sender setMenu:mainMenu];
+        sender.showsMenuAsPrimaryAction = YES;
+    } else if ([self.viewController isKindOfClass:%c(AWEAwemeBaseViewController)]) {
+        // 处理普通视频的情况
+        AWEAwemeBaseViewController *rootVC = (AWEAwemeBaseViewController *)self.viewController;
+        
+        UIAction *hdAction = [UIAction actionWithTitle:@"Download HD Video"
+                                                 image:[UIImage systemImageNamed:@"video.fill"]
+                                            identifier:nil
+                                               handler:^(__kindof UIAction * _Nonnull action) {
+            [self downloadHDVideo:rootVC];
+        }];
+        
+        UIAction *sdAction = [UIAction actionWithTitle:@"Download SD Video"
+                                                 image:[UIImage systemImageNamed:@"video.fill"]
+                                            identifier:nil
+                                               handler:^(__kindof UIAction * _Nonnull action) {
+            [self downloadVideo:rootVC];
+        }];
+        
+        UIAction *musicAction = [UIAction actionWithTitle:@"Download Music"
+                                                    image:[UIImage systemImageNamed:@"music.note"]
+                                               identifier:nil
+                                                  handler:^(__kindof UIAction * _Nonnull action) {
+            [self downloadMusic:rootVC];
+        }];
+        
+        UIAction *copyMusicAction = [UIAction actionWithTitle:@"Copy Music link"
+                                                         image:[UIImage systemImageNamed:@"link"]
+                                                    identifier:nil
+                                                       handler:^(__kindof UIAction * _Nonnull action) {
+            [self copyMusic:rootVC];
+        }];
+        
+        UIAction *copyVideoAction = [UIAction actionWithTitle:@"Copy Video link"
+                                                         image:[UIImage systemImageNamed:@"link"]
+                                                    identifier:nil
+                                                       handler:^(__kindof UIAction * _Nonnull action) {
+            [self copyVideo:rootVC];
+        }];
+        
+        UIAction *copyDescAction = [UIAction actionWithTitle:@"Copy Description"
+                                                        image:[UIImage systemImageNamed:@"note.text"]
+                                                   identifier:nil
+                                                      handler:^(__kindof UIAction * _Nonnull action) {
+            [self copyDecription:rootVC];
+        }];
+        
+        UIMenu *downloadMenu = [UIMenu menuWithTitle:@"Downloads Menu"
+                                            children:@[hdAction, sdAction, musicAction]];
+        UIMenu *copyMenu = [UIMenu menuWithTitle:@"Copy Menu"
+                                        children:@[copyMusicAction, copyVideoAction, copyDescAction]];
+        UIMenu *mainMenu = [UIMenu menuWithTitle:@"" children:@[downloadMenu, copyMenu]];
+        
         [sender setMenu:mainMenu];
         sender.showsMenuAsPrimaryAction = YES;
     }
