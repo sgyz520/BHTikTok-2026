@@ -45,5 +45,4 @@
 + (BOOL)isEmpty:(NSURL *)url;
 + (NSString *)getDownloadingPersent:(float)per;
 + (void)saveMedia:(id)item fileExtension:(id)fileExtension;
- + (NSString *)L:(NSString *)key;
 @end

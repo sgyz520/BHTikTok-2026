@@ -2,156 +2,10 @@
 
 NSArray *jailbreakPaths;
 
-static void showAlert(NSString *title, NSString *message, NSString *okTitle, NSString *cancelTitle, void (^okHandler)(void)) {
-  Class alertViewClass = NSClassFromString(@"AWEUIAlertView");
-  if (alertViewClass && [alertViewClass respondsToSelector:@selector(showAlertWithTitle:description:image:actionButtonTitle:cancelButtonTitle:actionBlock:cancelBlock:)]) {
-    [alertViewClass showAlertWithTitle:title description:message image:nil actionButtonTitle:okTitle cancelButtonTitle:cancelTitle actionBlock:^{ okHandler(); } cancelBlock:nil];
-  } else {
-    UIAlertController *ac = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
-    [ac addAction:[UIAlertAction actionWithTitle:cancelTitle style:UIAlertActionStyleCancel handler:nil]];
-    [ac addAction:[UIAlertAction actionWithTitle:okTitle style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action){ okHandler(); }]];
-    [topMostController() presentViewController:ac animated:YES completion:nil];
-  }
-}
-
 static void showConfirmation(void (^okHandler)(void)) {
-  showAlert(NSLocalizedString(@"BHTikTok, Hi", nil), NSLocalizedString(@"Are you sure?", nil), NSLocalizedString(@"Yes", nil), NSLocalizedString(@"No", nil), okHandler);
-}
-
-static NSString *flagEmojiForCountryCode(NSString *code) {
-  if (!code || code.length < 2) return nil;
-  NSString *upper = [code.uppercaseString substringToIndex:2];
-  unichar a = [upper characterAtIndex:0];
-  unichar b = [upper characterAtIndex:1];
-  int base = 127397;
-  unichar ua = (unichar)(a + base);
-  unichar ub = (unichar)(b + base);
-  return [[NSString alloc] initWithCharacters:(unichar[]){ua, ub} length:2];
-}
-
-static NSString *countryNameForCountryCode(NSString *code) {
-  if (!code || code.length < 2) return nil;
-  NSString *upper = [code.uppercaseString substringToIndex:2];
-  
-  NSDictionary *countryNames = @{
-    @"US": @"美国",
-    @"CN": @"中国",
-    @"TW": @"中国台湾",
-    @"HK": @"中国香港",
-    @"JP": @"日本",
-    @"KR": @"韩国",
-    @"GB": @"英国",
-    @"FR": @"法国",
-    @"DE": @"德国",
-    @"IT": @"意大利",
-    @"ES": @"西班牙",
-    @"RU": @"俄罗斯",
-    @"IN": @"印度",
-    @"BR": @"巴西",
-    @"CA": @"加拿大",
-    @"AU": @"澳大利亚",
-    @"MX": @"墨西哥",
-    @"ID": @"印度尼西亚",
-    @"NL": @"荷兰",
-    @"SA": @"沙特阿拉伯",
-    @"TR": @"土耳其",
-    @"CH": @"瑞士",
-    @"AR": @"阿根廷",
-    @"IE": @"爱尔兰",
-    @"NO": @"挪威",
-    @"AT": @"奥地利",
-    @"SE": @"瑞典",
-    @"BE": @"比利时",
-    @"PL": @"波兰",
-    @"TH": @"泰国",
-    @"NG": @"尼日利亚",
-    @"AE": @"阿联酋",
-    @"EG": @"埃及",
-    @"ZA": @"南非",
-    @"SG": @"新加坡",
-    @"MY": @"马来西亚",
-    @"PH": @"菲律宾",
-    @"VN": @"越南",
-    @"BD": @"孟加拉国",
-    @"CL": @"智利",
-    @"FI": @"芬兰",
-    @"PK": @"巴基斯坦",
-    @"RO": @"罗马尼亚",
-    @"CZ": @"捷克",
-    @"NZ": @"新西兰",
-    @"PT": @"葡萄牙",
-    @"GR": @"希腊",
-    @"DK": @"丹麦",
-    @"IL": @"以色列",
-    @"HU": @"匈牙利",
-    @"UA": @"乌克兰",
-    @"CO": @"哥伦比亚",
-    @"PE": @"秘鲁",
-    @"DZ": @"阿尔及利亚",
-    @"KZ": @"哈萨克斯坦",
-    @"QA": @"卡塔尔",
-    @"KW": @"科威特",
-    @"OM": @"阿曼",
-    @"JO": @"约旦",
-    @"LB": @"黎巴嫩",
-    @"BH": @"巴林",
-    @"IR": @"伊朗",
-    @"AF": @"阿富汗",
-    @"IQ": @"伊拉克",
-    @"SY": @"叙利亚",
-    @"YE": @"也门",
-    @"LY": @"利比亚",
-    @"TN": @"突尼斯",
-    @"MA": @"摩洛哥",
-    @"SD": @"苏丹",
-    @"SO": @"索马里",
-    @"ET": @"埃塞俄比亚",
-    @"KE": @"肯尼亚",
-    @"TZ": @"坦桑尼亚",
-    @"UG": @"乌干达",
-    @"GH": @"加纳",
-    @"CI": @"科特迪瓦",
-    @"SN": @"塞内加尔",
-    @"ML": @"马里",
-    @"BF": @"布基纳法索",
-    @"NE": @"尼日尔",
-    @"TD": @"乍得",
-    @"CM": @"喀麦隆",
-    @"GA": @"加蓬",
-    @"CG": @"刚果(布)",
-    @"CD": @"刚果(金)",
-    @"RW": @"卢旺达",
-    @"BI": @"布隆迪",
-    @"DJ": @"吉布提",
-    @"ER": @"厄立特里亚",
-    @"SS": @"南苏丹",
-    @"GM": @"冈比亚",
-    @"GN": @"几内亚",
-    @"GW": @"几内亚比绍",
-    @"SL": @"塞拉利昂",
-    @"LR": @"利比里亚",
-    @"TG": @"多哥",
-    @"BJ": @"贝宁",
-    @"CF": @"中非",
-    @"KM": @"科摩罗",
-    @"MR": @"毛里塔尼亚",
-    @"MG": @"马达加斯加",
-    @"MU": @"毛里求斯",
-    @"SC": @"塞舌尔",
-    @"CV": @"佛得角",
-    @"ST": @"圣多美和普林西比",
-    @"MW": @"马拉维",
-    @"ZM": @"赞比亚",
-    @"ZW": @"津巴布韦",
-    @"BW": @"博茨瓦纳",
-    @"NA": @"纳米比亚",
-    @"SZ": @"斯威士兰",
-    @"LS": @"莱索托",
-    @"AO": @"安哥拉",
-    @"MZ": @"莫桑比克"
-  };
-  
-  return countryNames[upper] ?: upper;
+  [%c(AWEUIAlertView) showAlertWithTitle:@"BHTikTok, Hi" description:@"Are you sure?" image:nil actionButtonTitle:@"Yes" cancelButtonTitle:@"No" actionBlock:^{
+    okHandler();
+  } cancelBlock:nil];
 }
 
 %hook AppDelegate
@@ -255,41 +109,47 @@ static BOOL isAuthenticationShowed = FALSE;
         clockImage.tintColor = [UIColor whiteColor];
         [clockImage setTranslatesAutoresizingMaskIntoConstraints:false];
         
-        // 同时显示点赞数和上传日期
-        if ([BHIManager videoLikeCount]) {
-            [self.contentView addSubview:heartImage];
-            [NSLayoutConstraint activateConstraints:@[
-                    [heartImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:110],
-                    [heartImage.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:4],
-                    [heartImage.widthAnchor constraintEqualToConstant:16],
-                    [heartImage.heightAnchor constraintEqualToConstant:16],
-                ]];
-            [self.contentView addSubview:likeCountLabel];
-            [NSLayoutConstraint activateConstraints:@[
-                    [likeCountLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:109],
-                    [likeCountLabel.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:23],
-                    [likeCountLabel.widthAnchor constraintEqualToConstant:200],
-                    [likeCountLabel.heightAnchor constraintEqualToConstant:16],
-                ]];
+
+        for (int i = 0; i < [[self.contentView subviews] count]; i ++) {
+            UIView *j = [[self.contentView subviews] objectAtIndex:i];
+            if (j.tag == 1001) {
+                [j removeFromSuperview];
+            } 
+            else if (j.tag == 1002) {
+                [j removeFromSuperview];
+            }
         }
-        
+        if ([BHIManager videoLikeCount]) {
+        [self.contentView addSubview:heartImage];
+        [NSLayoutConstraint activateConstraints:@[
+                [heartImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:110],
+                [heartImage.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:4],
+                [heartImage.widthAnchor constraintEqualToConstant:16],
+                [heartImage.heightAnchor constraintEqualToConstant:16],
+            ]];
+        [self.contentView addSubview:likeCountLabel];
+        [NSLayoutConstraint activateConstraints:@[
+                [likeCountLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:109],
+                [likeCountLabel.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:23],
+                [likeCountLabel.widthAnchor constraintEqualToConstant:200],
+                [likeCountLabel.heightAnchor constraintEqualToConstant:16],
+            ]];
+        }
         if ([BHIManager videoUploadDate]) {
-            // 根据是否有点赞数来调整上传日期的位置
-            CGFloat topConstant = [BHIManager videoLikeCount] ? 128 : 110;
-            [self.contentView addSubview:clockImage];
-            [NSLayoutConstraint activateConstraints:@[
-                    [clockImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:topConstant],
-                    [clockImage.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:4],
-                    [clockImage.widthAnchor constraintEqualToConstant:16],
-                    [clockImage.heightAnchor constraintEqualToConstant:16],
-                ]];
-            [self.contentView addSubview:uploadDateLabel];
-            [NSLayoutConstraint activateConstraints:@[
-                    [uploadDateLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:topConstant-1],
-                    [uploadDateLabel.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:23],
-                    [uploadDateLabel.widthAnchor constraintEqualToConstant:200],
-                    [uploadDateLabel.heightAnchor constraintEqualToConstant:16],
-                ]];
+        [self.contentView addSubview:clockImage];
+        [NSLayoutConstraint activateConstraints:@[
+                [clockImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:128],
+                [clockImage.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:4],
+                [clockImage.widthAnchor constraintEqualToConstant:16],
+                [clockImage.heightAnchor constraintEqualToConstant:16],
+            ]];
+        [self.contentView addSubview:uploadDateLabel];
+        [NSLayoutConstraint activateConstraints:@[
+                [uploadDateLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:127],
+                [uploadDateLabel.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:23],
+                [uploadDateLabel.widthAnchor constraintEqualToConstant:200],
+                [uploadDateLabel.heightAnchor constraintEqualToConstant:16],
+            ]];
         }
     }
 }
@@ -302,6 +162,15 @@ static BOOL isAuthenticationShowed = FALSE;
     } else {
         return [NSString stringWithFormat:@"%ld", (long)number];
     }
+
+}
+%new - (NSString *)formattedDateStringFromTimestamp:(NSTimeInterval)timestamp {
+
+    NSDate *date = [NSDate dateWithTimeIntervalSince1970:timestamp];
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    dateFormatter.dateFormat = @"dd.MM.yy"; 
+    return [dateFormatter stringFromDate:date];
+
 }
 %end
 
@@ -336,9 +205,9 @@ static BOOL isAuthenticationShowed = FALSE;
 }
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
     if (sender.state == UIGestureRecognizerStateBegan) {
-        showAlert(NSLocalizedString(@"Save profile image", nil), NSLocalizedString(@"Do you want to save this image", nil), NSLocalizedString(@"Yes", nil), NSLocalizedString(@"No", nil), ^{
+        [%c(AWEUIAlertView) showAlertWithTitle:@"Save profile image" description:@"Do you want to save this image" image:nil actionButtonTitle:@"Yes" cancelButtonTitle:@"No" actionBlock:^{
             UIImageWriteToSavedPhotosAlbum([self bd_baseImage], self, @selector(image:didFinishSavingWithError:contextInfo:), nil);
-        });
+  } cancelBlock:nil];
     }
 }
 %new - (void)image:(UIImage *)image didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo {
@@ -374,99 +243,12 @@ static BOOL isAuthenticationShowed = FALSE;
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
     if (sender.state == UIGestureRecognizerStateBegan) {
         NSString *profileDescription = [self text];
-        showAlert(NSLocalizedString(@"Copy bio", nil), NSLocalizedString(@"Do you want to copy this text to clipboard", nil), NSLocalizedString(@"Yes", nil), NSLocalizedString(@"No", nil), ^{
+        [%c(AWEUIAlertView) showAlertWithTitle:@"Copy bio" description:@"Do you want to copy this text to clipboard" image:nil actionButtonTitle:@"Yes" cancelButtonTitle:@"No" actionBlock:^{
              if (profileDescription) {
-                UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-                pasteboard.string = profileDescription;
-             }
-        });
-    }
-}
-%end
-
-// 全局函数：格式化时间戳为日期字符串
-static NSString *formattedDateStringFromTimestamp(NSTimeInterval timestamp) {
-    NSDate *date = [NSDate dateWithTimeIntervalSince1970:timestamp];
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    dateFormatter.dateFormat = @"yyyy-MM-dd"; 
-    return [dateFormatter stringFromDate:date];
-}
-
-%hook AWEPlayInteractionAuthorView
-- (NSString *)emojiForCountryCode:(NSString *)countryCode {
-    if ([BHIManager uploadRegion]) {
-        NSDictionary *selectedRegion = [BHIManager selectedRegion];
-        NSString *code = countryCode ?: selectedRegion[@"code"];
-        NSString *countryName = countryNameForCountryCode(code);
-        if (countryName) {
-            // 返回国家名称，日期将在下面单独显示
-            return countryName;
-        }
-    }
-    return %orig;
-}
-
-- (void)layoutSubviews {
-    %orig;
-    
-    // 处理国家名称显示
-    if ([BHIManager uploadRegion]) {
-        // 调整UIStackView的位置
-        for (int i = 0; i < [[self subviews] count]; i++) {
-            id j = [[self subviews] objectAtIndex:i];
-            if ([j isKindOfClass:%c(UIStackView)]) {
-                CGRect frame = [j frame];
-                frame.origin.x = 39.5; 
-                [j setFrame:frame];
-            } else {
-                [[self viewWithTag:666] removeFromSuperview];
-            }
-        }
-        
-        // 添加国家标签
-        [[self viewWithTag:666] removeFromSuperview];
-        AWEFeedCellViewController* rootVC = self.yy_viewController;
-        AWEAwemeModel *model = rootVC.model;
-        NSString *countryID = model.region;
-        UILabel *uploadLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 2, 39.5, 20.5)];
-        NSString *countryName = countryNameForCountryCode(countryID);
-        uploadLabel.text = [NSString stringWithFormat:@"%@ •", countryName];
-        uploadLabel.tag = 666;
-        [uploadLabel setTextColor: [UIColor whiteColor]];
-        [uploadLabel sizeToFit];
-        [self addSubview:uploadLabel];
-    }
-    
-    // 如果启用了视频上传日期功能，则添加日期标签
-    if ([BHIManager uploadRegion] && [BHIManager videoUploadDate]) {
-        // 先移除可能已存在的日期标签
-        for (UIView *subview in self.subviews) {
-            if (subview.tag == 9999) {
-                [subview removeFromSuperview];
-            }
-        }
-        
-        // 获取视频创建时间
-        AWEFeedCellViewController* rootVC = self.yy_viewController;
-        AWEAwemeModel *model = rootVC.model;
-        NSNumber *createTime = [model createTime];
-        NSString *formattedDate = formattedDateStringFromTimestamp([createTime doubleValue]);
-        
-        // 创建并添加日期标签
-        UILabel *dateLabel = [[UILabel alloc] init];
-        dateLabel.text = [NSString stringWithFormat:@"上传 %@", formattedDate];
-        dateLabel.textColor = [UIColor whiteColor];
-        dateLabel.font = [UIFont systemFontOfSize:12.0];
-        dateLabel.tag = 9999;
-        dateLabel.translatesAutoresizingMaskIntoConstraints = NO;
-        [self addSubview:dateLabel];
-        
-        // 设置约束
-        [NSLayoutConstraint activateConstraints:@[
-            [dateLabel.topAnchor constraintEqualToAnchor:self.bottomAnchor constant:2],
-            [dateLabel.leadingAnchor constraintEqualToAnchor:self.leadingAnchor],
-            [dateLabel.trailingAnchor constraintEqualToAnchor:self.trailingAnchor]
-        ]];
+                                                                    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+                                                                    pasteboard.string = profileDescription;
+                                                                }
+  } cancelBlock:nil];
     }
 }
 %end
@@ -486,14 +268,11 @@ static NSString *formattedDateStringFromTimestamp(NSTimeInterval timestamp) {
 - (void)viewDidLoad {
     %orig;
     if ([self.sectionIdentifier isEqualToString:@"account"]) {
-        Class CellClass = %c(TTKSettingsBaseCellPlugin);
-        Class ItemClass = %c(AWESettingItemModel);
-        if (!CellClass || !ItemClass) { return; }
-        TTKSettingsBaseCellPlugin *BHTikTokSettingsPluginCell = [[CellClass alloc] initWithPluginContext:self.context];
+        TTKSettingsBaseCellPlugin *BHTikTokSettingsPluginCell = [[%c(TTKSettingsBaseCellPlugin) alloc] initWithPluginContext:self.context];
 
-        AWESettingItemModel *BHTikTokSettingsItemModel = [[ItemClass alloc] initWithIdentifier:@"bhtiktok_settings"];
-        [BHTikTokSettingsItemModel setTitle:NSLocalizedString(@"BHTikTok++ settings", nil)];
-        [BHTikTokSettingsItemModel setDetail:NSLocalizedString(@"BHTikTok++ settings", nil)];
+        AWESettingItemModel *BHTikTokSettingsItemModel = [[%c(AWESettingItemModel) alloc] initWithIdentifier:@"bhtiktok_settings"];
+        [BHTikTokSettingsItemModel setTitle:@"BHTikTok++ settings"];
+        [BHTikTokSettingsItemModel setDetail:@"BHTikTok++ settings"];
         [BHTikTokSettingsItemModel setIconImage:[UIImage systemImageNamed:@"gear"]];
         [BHTikTokSettingsItemModel setType:99];
 
@@ -956,19 +735,7 @@ static NSString *formattedDateStringFromTimestamp(NSTimeInterval timestamp) {
             AWEUserModel *authorModel = model.author;
             NSString *nickname = authorModel.nickname;
             NSString *username = authorModel.socialName;
-            NSString *textOut = username;
-            if ([BHIManager uploadRegion]) {
-                NSString *regionCode = model.region;
-                if (!regionCode) {
-                    NSDictionary *selectedRegion = [BHIManager selectedRegion];
-                    regionCode = selectedRegion[@"code"];
-                }
-                NSString *countryName = countryNameForCountryCode(regionCode);
-                if (countryName) {
-                    textOut = [NSString stringWithFormat:@"%@ %@", username ?: arg1, countryName];
-                }
-            }
-            %orig(textOut);
+            %orig(username);
         }else {
             %orig;
         }
@@ -1216,6 +983,250 @@ static NSString *formattedDateStringFromTimestamp(NSTimeInterval timestamp) {
     return %orig;
 }
 %end
+%hook AWEPlayInteractionAuthorView
+%new - (NSString *)emojiForCountryCode:(NSString *)countryCode {
+    // 将国家代码转换为中文国家名称
+    NSDictionary *countryNames = @{
+        // 亚洲
+        @"CN": @"中国",
+        @"JP": @"日本",
+        @"KR": @"韩国",
+        @"KP": @"朝鲜",
+        @"IN": @"印度",
+        @"TH": @"泰国",
+        @"VN": @"越南",
+        @"ID": @"印度尼西亚",
+        @"MY": @"马来西亚",
+        @"SG": @"新加坡",
+        @"PH": @"菲律宾",
+        @"PK": @"巴基斯坦",
+        @"BD": @"孟加拉国",
+        @"MM": @"缅甸",
+        @"KH": @"柬埔寨",
+        @"LA": @"老挝",
+        @"NP": @"尼泊尔",
+        @"LK": @"斯里兰卡",
+        @"MV": @"马尔代夫",
+        @"BT": @"不丹",
+        @"MN": @"蒙古",
+        @"KZ": @"哈萨克斯坦",
+        @"UZ": @"乌兹别克斯坦",
+        @"KG": @"吉尔吉斯斯坦",
+        @"TJ": @"塔吉克斯坦",
+        @"TM": @"土库曼斯坦",
+        @"AF": @"阿富汗",
+        @"IR": @"伊朗",
+        @"IQ": @"伊拉克",
+        @"SA": @"沙特阿拉伯",
+        @"YE": @"也门",
+        @"OM": @"阿曼",
+        @"JO": @"约旦",
+        @"SY": @"叙利亚",
+        @"LB": @"黎巴嫩",
+        @"IL": @"以色列",
+        @"PS": @"巴勒斯坦",
+        @"AE": @"阿联酋",
+        @"QA": @"卡塔尔",
+        @"BH": @"巴林",
+        @"KW": @"科威特",
+        @"TR": @"土耳其",
+        @"CY": @"塞浦路斯",
+        
+        // 欧洲
+        @"RU": @"俄罗斯",
+        @"GB": @"英国",
+        @"FR": @"法国",
+        @"DE": @"德国",
+        @"IT": @"意大利",
+        @"ES": @"西班牙",
+        @"PT": @"葡萄牙",
+        @"GR": @"希腊",
+        @"NL": @"荷兰",
+        @"BE": @"比利时",
+        @"LU": @"卢森堡",
+        @"IE": @"爱尔兰",
+        @"DK": @"丹麦",
+        @"NO": @"挪威",
+        @"SE": @"瑞典",
+        @"FI": @"芬兰",
+        @"IS": @"冰岛",
+        @"CH": @"瑞士",
+        @"AT": @"奥地利",
+        @"CZ": @"捷克",
+        @"SK": @"斯洛伐克",
+        @"HU": @"匈牙利",
+        @"PL": @"波兰",
+        @"RO": @"罗马尼亚",
+        @"BG": @"保加利亚",
+        @"HR": @"克罗地亚",
+        @"SI": @"斯洛文尼亚",
+        @"EE": @"爱沙尼亚",
+        @"LV": @"拉脱维亚",
+        @"LT": @"立陶宛",
+        @"UA": @"乌克兰",
+        @"BY": @"白俄罗斯",
+        @"MD": @"摩尔多瓦",
+        @"AL": @"阿尔巴尼亚",
+        @"ME": @"黑山",
+        @"RS": @"塞尔维亚",
+        @"BA": @"波黑",
+        @"MK": @"北马其顿",
+        @"AD": @"安道尔",
+        @"MC": @"摩纳哥",
+        @"SM": @"圣马力诺",
+        @"VA": @"梵蒂冈",
+        @"MT": @"马耳他",
+        @"LI": @"列支敦士登",
+        
+        // 美洲
+        @"US": @"美国",
+        @"CA": @"加拿大",
+        @"MX": @"墨西哥",
+        @"BR": @"巴西",
+        @"AR": @"阿根廷",
+        @"CL": @"智利",
+        @"PE": @"秘鲁",
+        @"CO": @"哥伦比亚",
+        @"VE": @"委内瑞拉",
+        @"EC": @"厄瓜多尔",
+        @"BO": @"玻利维亚",
+        @"PY": @"巴拉圭",
+        @"UY": @"乌拉圭",
+        @"GY": @"圭亚那",
+        @"SR": @"苏里南",
+        @"GF": @"法属圭亚那",
+        @"CU": @"古巴",
+        @"JM": @"牙买加",
+        @"HT": @"海地",
+        @"DO": @"多米尼加",
+        @"PR": @"波多黎各",
+        @"CR": @"哥斯达黎加",
+        @"PA": @"巴拿马",
+        @"GT": @"危地马拉",
+        @"HN": @"洪都拉斯",
+        @"SV": @"萨尔瓦多",
+        @"NI": @"尼加拉瓜",
+        @"BZ": @"伯利兹",
+        @"BB": @"巴巴多斯",
+        @"TT": @"特立尼达和多巴哥",
+        @"BS": @"巴哈马",
+        
+        // 非洲
+        @"EG": @"埃及",
+        @"ZA": @"南非",
+        @"NG": @"尼日利亚",
+        @"KE": @"肯尼亚",
+        @"TZ": @"坦桑尼亚",
+        @"UG": @"乌干达",
+        @"GH": @"加纳",
+        @"CI": @"科特迪瓦",
+        @"SN": @"塞内加尔",
+        @"MA": @"摩洛哥",
+        @"DZ": @"阿尔及利亚",
+        @"TN": @"突尼斯",
+        @"LY": @"利比亚",
+        @"SD": @"苏丹",
+        @"ET": @"埃塞俄比亚",
+        @"MO": @"摩洛哥",
+        @"MW": @"马拉维",
+        @"ZM": @"赞比亚",
+        @"ZW": @"津巴布韦",
+        @"BW": @"博茨瓦纳",
+        @"NA": @"纳米比亚",
+        @"MZ": @"莫桑比克",
+        @"AO": @"安哥拉",
+        @"CM": @"喀麦隆",
+        @"CD": @"刚果(金)",
+        @"CG": @"刚果(布)",
+        @"GA": @"加蓬",
+        @"GQ": @"赤道几内亚",
+        @"CF": @"中非",
+        @"TD": @"乍得",
+        @"NE": @"尼日尔",
+        @"BF": @"布基纳法索",
+        @"ML": @"马里",
+        @"MR": @"毛里塔尼亚",
+        @"SL": @"塞拉利昂",
+        @"LR": @"利比里亚",
+        @"GN": @"几内亚",
+        @"GW": @"几内亚比绍",
+        @"GM": @"冈比亚",
+        @"ST": @"圣多美和普林西比",
+        @"CV": @"佛得角",
+        @"SC": @"塞舌尔",
+        @"MU": @"毛里求斯",
+        @"MG": @"马达加斯加",
+        @"KM": @"科摩罗",
+        @"RE": @"留尼汪",
+        @"YT": @"马约特",
+        @"SH": @"圣赫勒拿",
+        @"BI": @"布隆迪",
+        @"RW": @"卢旺达",
+        @"SO": @"索马里",
+        @"DJ": @"吉布提",
+        @"ER": @"厄立特里亚",
+        
+        // 大洋洲
+        @"AU": @"澳大利亚",
+        @"NZ": @"新西兰",
+        @"PG": @"巴布亚新几内亚",
+        @"FJ": @"斐济",
+        @"SB": @"所罗门群岛",
+        @"VU": @"瓦努阿图",
+        @"NC": @"新喀里多尼亚",
+        @"PF": @"法属波利尼西亚",
+        @"WS": @"萨摩亚",
+        @"KI": @"基里巴斯",
+        @"TO": @"汤加",
+        @"TV": @"图瓦卢",
+        @"NR": @"瑙鲁",
+        @"PW": @"帕劳",
+        @"FM": @"密克罗尼西亚",
+        @"MH": @"马绍尔群岛",
+        @"GU": @"关岛",
+        @"MP": @"北马里亚纳群岛",
+        @"AS": @"美属萨摩亚",
+        @"CK": @"库克群岛",
+        @"NU": @"纽埃",
+        @"TK": @"托克劳",
+        @"NF": @"诺福克岛"
+    };
+    
+    // 转换为大写
+    NSString *uppercaseCountryCode = [countryCode uppercaseString];
+    
+    // 返回对应的中文名称，如果没有找到则返回原代码
+    return countryNames[uppercaseCountryCode] ?: uppercaseCountryCode;
+}
+
+- (void)layoutSubviews {
+    %orig;
+    if ([BHIManager uploadRegion]){
+        for (int i = 0; i < [[self subviews] count]; i ++){
+            id j = [[self subviews] objectAtIndex:i];
+            if ([j isKindOfClass:%c(UIStackView)]){
+                CGRect frame = [j frame];
+                frame.origin.x = 39.5; 
+                [j setFrame:frame];
+            }else {
+                [[self viewWithTag:666] removeFromSuperview];
+            }
+        }
+        [[self viewWithTag:666] removeFromSuperview];
+        AWEFeedCellViewController* rootVC = self.yy_viewController;
+        AWEAwemeModel *model = rootVC.model;
+        NSString *countryID = model.region;
+        UILabel *uploadLabel = [[UILabel alloc]initWithFrame:CGRectMake(0,2,60,20.5)];
+        NSString *countryName = [self emojiForCountryCode:countryID];
+        uploadLabel.text = [NSString stringWithFormat:@"%@ •",countryName];
+        uploadLabel.tag = 666;
+        [uploadLabel setTextColor: [UIColor whiteColor]];
+        [uploadLabel setFont:[UIFont systemFontOfSize:12.0]]; // 设置合适的字体大小
+        [uploadLabel sizeToFit];
+        [self addSubview:uploadLabel];
+    }
+}
+%end
 %hook TIKTOKProfileHeaderView // copy profile information
 - (id)initWithFrame:(CGRect)arg1 {
     self = %orig;
@@ -1371,7 +1382,7 @@ static NSString *formattedDateStringFromTimestamp(NSTimeInterval timestamp) {
         UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
         pasteboard.string = [downloadableURL absoluteString];
     } else {
-        showAlert(@"BHTikTok, Hi", @"Could Not Copy Music.", @"OK", @"Cancel", ^{});
+        [%c(AWEUIAlertView) showAlertWithTitle:@"BHTikTok, Hi" description:@"Could Not Copy Music." image:nil actionButtonTitle:@"OK" cancelButtonTitle:nil actionBlock:nil cancelBlock:nil];
     }
 }
 %new - (void)copyVideo:(AWEAwemeBaseViewController *)rootVC {
@@ -1380,7 +1391,7 @@ static NSString *formattedDateStringFromTimestamp(NSTimeInterval timestamp) {
         UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
         pasteboard.string = [downloadableURL absoluteString];
     } else {
-        showAlert(@"BHTikTok, Hi", @"The video dosen't have music to download.", @"OK", @"Cancel", ^{});
+        [%c(AWEUIAlertView) showAlertWithTitle:@"BHTikTok, Hi" description:@"The video dosen't have music to download." image:nil actionButtonTitle:@"OK" cancelButtonTitle:nil actionBlock:nil cancelBlock:nil];
     }
 }
 %new - (void)copyDecription:(AWEAwemeBaseViewController *)rootVC {
@@ -1389,7 +1400,7 @@ static NSString *formattedDateStringFromTimestamp(NSTimeInterval timestamp) {
         UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
         pasteboard.string = video_description;
     } else {
-        showAlert(@"BHTikTok, Hi", @"The video dosen't have music to download.", @"OK", @"Cancel", ^{});
+        [%c(AWEUIAlertView) showAlertWithTitle:@"BHTikTok, Hi" description:@"The video dosen't have music to download." image:nil actionButtonTitle:@"OK" cancelButtonTitle:nil actionBlock:nil cancelBlock:nil];
     }
 }
 %new - (void) downloadButtonHandler:(UIButton *)sender {
@@ -1432,7 +1443,11 @@ static NSString *formattedDateStringFromTimestamp(NSTimeInterval timestamp) {
                                           handler:^(__kindof UIAction * _Nonnull action) {
                                             [self copyDecription:rootVC];
     }];
-    UIMenu *mainMenu = [UIMenu menuWithTitle:@"" children:@[action1, action0, action2, action3, action4, action5]];
+    UIMenu *downloadMenu = [UIMenu menuWithTitle:@"Downloads Menu"
+                                        children:@[action1, action0,action2]];
+    UIMenu *copyMenu = [UIMenu menuWithTitle:@"Copy Menu"
+                                        children:@[action3, action4, action5]];
+    UIMenu *mainMenu = [UIMenu menuWithTitle:@"" children:@[downloadMenu, copyMenu]];
     [sender setMenu:mainMenu];
     sender.showsMenuAsPrimaryAction = YES;
     } else if ([self.viewController isKindOfClass:%c(TTKPhotoAlbumDetailCellController)]) {
@@ -1483,7 +1498,13 @@ static NSString *formattedDateStringFromTimestamp(NSTimeInterval timestamp) {
                                           handler:^(__kindof UIAction * _Nonnull action) {
                                             [self copyDecription:rootVC];
     }];
-    UIMenu *mainMenu = [UIMenu menuWithTitle:@"" children:[photosActions arrayByAddingObjectsFromArray:@[action2, action3, action4, action5]]];
+    UIMenu *PhotosMenu = [UIMenu menuWithTitle:@"Download Photos Menu"
+                                        children:photosActions];
+    UIMenu *downloadMenu = [UIMenu menuWithTitle:@"Downloads Menu"
+                                        children:@[action2]];
+    UIMenu *copyMenu = [UIMenu menuWithTitle:@"Copy Menu"
+                                        children:@[action3, action4, action5]];
+    UIMenu *mainMenu = [UIMenu menuWithTitle:@"" children:@[PhotosMenu, downloadMenu, copyMenu]];
     [sender setMenu:mainMenu];
     sender.showsMenuAsPrimaryAction = YES;
     }else if ([self.viewController isKindOfClass:%c(TTKPhotoAlbumFeedCellController)]) {
@@ -1534,7 +1555,13 @@ static NSString *formattedDateStringFromTimestamp(NSTimeInterval timestamp) {
                                           handler:^(__kindof UIAction * _Nonnull action) {
                                             [self copyDecription:rootVC];
     }];
-    UIMenu *mainMenu = [UIMenu menuWithTitle:@"" children:[photosActions arrayByAddingObjectsFromArray:@[action2, action3, action4, action5]]];
+    UIMenu *PhotosMenu = [UIMenu menuWithTitle:@"Download Photos Menu"
+                                        children:photosActions];
+    UIMenu *downloadMenu = [UIMenu menuWithTitle:@"Downloads Menu"
+                                        children:@[action2]];
+    UIMenu *copyMenu = [UIMenu menuWithTitle:@"Copy Menu"
+                                        children:@[action3, action4, action5]];
+    UIMenu *mainMenu = [UIMenu menuWithTitle:@"" children:@[PhotosMenu, downloadMenu, copyMenu]];
     [sender setMenu:mainMenu];
     sender.showsMenuAsPrimaryAction = YES;
     }
@@ -1724,7 +1751,7 @@ static NSString *formattedDateStringFromTimestamp(NSTimeInterval timestamp) {
         UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
         pasteboard.string = [downloadableURL absoluteString];
     } else {
-        showAlert(@"BHTikTok, Hi", @"The video dosen't have music to download.", @"OK", @"Cancel", ^{});
+        [%c(AWEUIAlertView) showAlertWithTitle:@"BHTikTok, Hi" description:@"The video dosen't have music to download." image:nil actionButtonTitle:@"OK" cancelButtonTitle:nil actionBlock:nil cancelBlock:nil];
     }
 }
 %new - (void)copyDecription:(AWEAwemeBaseViewController *)rootVC {
@@ -1733,7 +1760,7 @@ static NSString *formattedDateStringFromTimestamp(NSTimeInterval timestamp) {
         UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
         pasteboard.string = video_description;
     } else {
-        showAlert(@"BHTikTok, Hi", @"The video dosen't have music to download.", @"OK", @"Cancel", ^{});
+        [%c(AWEUIAlertView) showAlertWithTitle:@"BHTikTok, Hi" description:@"The video dosen't have music to download." image:nil actionButtonTitle:@"OK" cancelButtonTitle:nil actionBlock:nil cancelBlock:nil];
     }
 }
 %new - (void) downloadButtonHandler:(UIButton *)sender {
@@ -1776,7 +1803,11 @@ static NSString *formattedDateStringFromTimestamp(NSTimeInterval timestamp) {
                                           handler:^(__kindof UIAction * _Nonnull action) {
                                             [self copyDecription:rootVC];
     }];
-    UIMenu *mainMenu = [UIMenu menuWithTitle:@"" children:@[action1, action0, action2, action3, action4, action5]];
+    UIMenu *downloadMenu = [UIMenu menuWithTitle:@"Downloads Menu"
+                                        children:@[action1, action0,action2]];
+    UIMenu *copyMenu = [UIMenu menuWithTitle:@"Copy Menu"
+                                        children:@[action3, action4, action5]];
+    UIMenu *mainMenu = [UIMenu menuWithTitle:@"" children:@[downloadMenu, copyMenu]];
     [sender setMenu:mainMenu];
     sender.showsMenuAsPrimaryAction = YES;
     }

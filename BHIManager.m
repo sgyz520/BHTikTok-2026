@@ -211,8 +211,4 @@
     NSNumber *number = [NSNumber numberWithFloat:per];
     return [numberFormatter stringFromNumber:number];
 }
-
-+ (NSString *)L:(NSString *)key {
-    return NSLocalizedStringFromTable(key, @"Localizable", nil);
-}
 @end

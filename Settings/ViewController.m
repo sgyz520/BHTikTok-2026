@@ -22,7 +22,7 @@
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor systemBackgroundColor];
     
-    self.title = NSLocalizedString(@"BHTikTok++ Settings", nil);
+    self.title = @"BHTikTok++ Settings";
     self.staticTable = [[UITableView alloc] initWithFrame:CGRectZero ];
     self.staticTable.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:self.staticTable];
@@ -52,22 +52,22 @@
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     switch (section) {
         case 0:
-            return NSLocalizedString(@"Feed", nil);
+            return @"Feed";
         case 1:
-            return NSLocalizedString(@"Profile", nil);
+            return @"Profile";
         case 2:
-            return NSLocalizedString(@"Confirm Settings", nil);
+            return @"Confirm";
         case 3:
-            return NSLocalizedString(@"Other", nil);
+            return @"Other";
         case 4:
-            return NSLocalizedString(@"Region", nil);
+            return @"Region";
             break;
         case 5:
-            return NSLocalizedString(@"Live Button Function", nil);
+            return @"Live Button Function";
         case 6:
-            return NSLocalizedString(@"Playback Speed", nil);
+            return @"Playback Speed";
         case 7:
-            return NSLocalizedString(@"Developer", nil);
+            return @"Developer";
         default:
             break;
     }
@@ -102,63 +102,63 @@
         switch (indexPath.row) {
             case 0:
                 return [self createSwitchCellWithTitle:@"Hide Ads"
-                                                Detail:@"FEATURE_HIDE_ADS"
+                                                Detail:@"Hide all ads from the app"
                                                    Key:@"hide_ads"];
             case 1:
                 return [self createSwitchCellWithTitle:@"Download Button"
-                                                Detail:@"FEATURE_DOWNLOAD_BUTTON"
+                                                Detail:@"Enable download button for videos"
                                                    Key:@"download_button"];
             case 2:
                 return [self createSwitchCellWithTitle:@"Share Sheet"
-                                                Detail:@"FEATURE_SHARE_SHEET"
+                                                Detail:@"Enable sharing options in share sheet"
                                                    Key:@"share_sheet"];
             case 3:
                 return [self createSwitchCellWithTitle:@"Remove Watermark"
-                                                Detail:@"FEATURE_REMOVE_WATERMARK"
+                                                Detail:@"Remove the TikTok watermark from videos"
                                                    Key:@"remove_watermark"];
             case 4:
                 return [self createSwitchCellWithTitle:@"Show/Hide UI Button"
-                                                Detail:@"FEATURE_UI_BUTTON"
+                                                Detail:@"Show or hide the UI button"
                                                    Key:@"remove_elements_button"];
             case 5:
                 return [self createSwitchCellWithTitle:@"Stop Playback"
-                                                Detail:@"FEATURE_STOP_PLAYBACK"
+                                                Detail:@"Stop video playback automatically"
                                                    Key:@"stop_play"];
             case 6:
                 return [self createSwitchCellWithTitle:@"Auto Play Next Video"
-                                                Detail:@"FEATURE_AUTO_PLAY"
+                                                Detail:@"Automatically play the next video"
                                                    Key:@"auto_play"];
             case 7:
                 return [self createSwitchCellWithTitle:@"Show Progress Bar"
-                                                Detail:@"FEATURE_PROGRESS_BAR"
+                                                Detail:@"Display progress bar on video playback"
                                                    Key:@"show_porgress_bar"];
             case 8:
                 return [self createSwitchCellWithTitle:@"Transparent Comments"
-                                                Detail:@"FEATURE_TRANSPARENT_COMMENTS"
+                                                Detail:@"Make comments transparent"
                                                    Key:@"transparent_commnet"];
             case 9:
                 return [self createSwitchCellWithTitle:@"Show Usernames"
-                                                Detail:@"FEATURE_SHOW_USERNAMES"
+                                                Detail:@"Display usernames on videos"
                                                    Key:@"show_username"];
             case 10:
                 return [self createSwitchCellWithTitle:@"Disable Sensitive Content"
-                                                Detail:@"FEATURE_DISABLE_SENSITIVE"
+                                                Detail:@"Disable sensitive content filter"
                                                    Key:@"disable_unsensitive"];
             case 11:
                 return [self createSwitchCellWithTitle:@"Disable Warnings"
-                                                Detail:@"FEATURE_DISABLE_WARNINGS"
+                                                Detail:@"Disable TikTok warnings"
                                                    Key:@"disable_warnings"];
             case 12:
                 return [self createSwitchCellWithTitle:@"Disable Live Streaming"
-                                                Detail:@"FEATURE_DISABLE_LIVE"
+                                                Detail:@"Disable live video streaming"
                                                    Key:@"disable_live"];
             case 13:
                 return [self createSwitchCellWithTitle:@"Skip Recommendations"
-                                                Detail:@"FEATURE_SKIP_RECOMMENDED"
+                                                Detail:@"Skip recommended videos"
                                                    Key:@"skip_recommnedations"];
             case 14:
                 return [self createSwitchCellWithTitle:@"Upload Region"
-                                                Detail:@"FEATURE_UPLOAD_REGION"
+                                                Detail:@"Show Upload Region Flag Next to Username"
                                                    Key:@"upload_region"];
             default:
                 break;
@@ -167,19 +167,19 @@
         switch (indexPath.row) {
             case 0:
                 return [self createSwitchCellWithTitle:@"Profile Save"
-                                                Detail:@"FEATURE_PROFILE_SAVE"
+                                                Detail:@"Save profile details to clipboard"
                                                    Key:@"save_profile"];
             case 1:
                 return [self createSwitchCellWithTitle:@"Profile Copy"
-                                                Detail:@"FEATURE_PROFILE_COPY"
+                                                Detail:@"Copy profile information"
                                                    Key:@"copy_profile_information"];
             case 2:
                 return [self createSwitchCellWithTitle:@"Video Like Count"
-                                                Detail:@"FEATURE_LIKE_COUNT"
+                                                Detail:@"Show the number of likes on videos"
                                                    Key:@"video_like_count"];
             case 3:
                 return [self createSwitchCellWithTitle:@"Video Upload Date"
-                                                Detail:@"FEATURE_UPLOAD_DATE"
+                                                Detail:@"Show the date videos were uploaded"
                                                    Key:@"video_upload_date"];
             default:
                 break;
@@ -188,19 +188,19 @@
         switch (indexPath.row) {
             case 0:
                 return [self createSwitchCellWithTitle:@"Like Confirmation"
-                                                Detail:@"FEATURE_CONFIRM_LIKE"
+                                                Detail:@"Confirm before liking a video"
                                                    Key:@"like_confirm"];
             case 1:
                 return [self createSwitchCellWithTitle:@"Like Comment Confirmation"
-                                                Detail:@"FEATURE_CONFIRM_COMMENT_LIKE"
+                                                Detail:@"Confirm before liking a comment"
                                                    Key:@"like_comment_confirm"];
             case 2:
                 return [self createSwitchCellWithTitle:@"Dislike Comment Confirmation"
-                                                Detail:@"FEATURE_CONFIRM_COMMENT_DISLIKE"
+                                                Detail:@"Confirm before disliking a comment"
                                                    Key:@"dislike_comment_confirm"];
             case 3:
                 return [self createSwitchCellWithTitle:@"Follow Confirmation"
-                                                Detail:@"FEATURE_CONFIRM_FOLLOW"
+                                                Detail:@"Confirm before following a user"
                                                    Key:@"follow_confirm"];
             default:
                 break;
@@ -209,11 +209,11 @@
         switch (indexPath.row) {
             case 0:
                 return [self createSwitchCellWithTitle:@"Always Open Safari"
-                                                Detail:@"Enable Embedded Links"
+                                                Detail:@"Always open links in Safari"
                                                    Key:@"openInBrowser"];
             case 1:
                 return [self createSwitchCellWithTitle:@"Enable Fake Changes"
-                                                Detail:@"FEATURE_FAKE_CHANGES"
+                                                Detail:@"Enable fake profile changes"
                                                    Key:@"en_fake"];
             case 2: {
                 UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
@@ -290,27 +290,27 @@
             }
             case 4:
                 return [self createSwitchCellWithTitle:@"Fake Verified"
-                                                Detail:@"FEATURE_FAKE_VERIFIED"
+                                                Detail:@"Make your account appear verified"
                                                    Key:@"fake_verify"];
             case 5:
                 return [self createSwitchCellWithTitle:@"Extended Bio"
-                                                Detail:@"FEATURE_PROFILE_COPY"
+                                                Detail:@"Extend bio section of your profile"
                                                    Key:@"extended_bio"];
             case 6:
                 return [self createSwitchCellWithTitle:@"Extended Comments"
-                                                Detail:@"FEATURE_EXTENDED_COMMENTS"
+                                                Detail:@"Extend the length of your comments"
                                                    Key:@"extendedComment"];
             case 7:
                 return [self createSwitchCellWithTitle:@"Upload HD"
-                                                Detail:@"FEATURE_UPLOAD_HD"
+                                                Detail:@"Upload videos in HD quality"
                                                    Key:@"upload_hd"];
             case 8:
                 return [self createSwitchCellWithTitle:@"App Lock"
-                                                Detail:@"FEATURE_APP_LOCK"
+                                                Detail:@"Lock the app with a passcode"
                                                    Key:@"padlock"];
             case 9:
                 return [self createSwitchCellWithTitle:@"Enable Flex"
-                                                Detail:@"FEATURE_ENABLE_FLEX"
+                                                Detail:@"Developers Only, DON'T touch it if you don't know what you are doing."
                                                    Key:@"flex_enebaled"];
             default:
                 break;
@@ -319,12 +319,12 @@
         switch (indexPath.row) {
             case 0:
                 return [self createSwitchCellWithTitle:@"Enable Region Changing"
-                                                Detail:@"Enable Region Changing Functionality"
+                                                Detail:@"Enable region changing functionality"
                                                    Key:@"en_region"];
             case 1: {
                 NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
                 UITableViewCell *regions = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
-                regions.textLabel.text = NSLocalizedString(@"Regions", nil);
+                regions.textLabel.text = @"Regions";
                 NSDictionary *selectedRegion = [defaults dictionaryForKey:@"region"];
                 regions.detailTextLabel.text = [NSString stringWithFormat:@"%@", selectedRegion[@"area"]];
                 return regions;
@@ -341,9 +341,9 @@
             case 1: {
                 NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
                 UITableViewCell *liveAction = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
-                liveAction.textLabel.text = NSLocalizedString(@"Actions", nil);
+                liveAction.textLabel.text = @"Actions";
                 NSString *selectedLiveAction = [defaults valueForKey:@"live_action"];
-                NSArray *liveFuncTitles = @[NSLocalizedString(@"Default", nil), NSLocalizedString(@"BHTikTok++ Settings", nil), NSLocalizedString(@"Playback Speed", nil)];
+                NSArray *liveFuncTitles = @[@"Default", @"BHTikTok++ Settings", @"Playback Speed"];
                 if (selectedLiveAction != nil) {
                     liveAction.detailTextLabel.text = [NSString stringWithFormat:@"%@", [liveFuncTitles objectAtIndex:[selectedLiveAction integerValue]]];
                 }
@@ -363,7 +363,7 @@
             }
             case 1: {
                 UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
-                cell.textLabel.text = NSLocalizedString(@"Speeds", nil);
+                cell.textLabel.text = @"Speeds";
                 
                 NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
                 NSString *selectedSpeed = [defaults valueForKey:@"playback_speed"];
@@ -466,9 +466,9 @@
     
     
     
-    cell.textLabel.text = NSLocalizedString(title, nil);
+    cell.textLabel.text = title;
     cell.detailTextLabel.numberOfLines = 0;
-    cell.detailTextLabel.text = NSLocalizedString(detail, nil);
+    cell.detailTextLabel.text = detail;
     cell.detailTextLabel.textColor = [UIColor grayColor];
     return cell;
     
