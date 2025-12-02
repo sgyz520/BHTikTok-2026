@@ -1365,11 +1365,11 @@ static BOOL isAuthenticationShowed = FALSE;
     [self addSubview:downloadButton];
 
     [NSLayoutConstraint activateConstraints:@[
-        [downloadButton.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:100],
-        [downloadButton.trailingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.trailingAnchor constant:-10],
-        [downloadButton.widthAnchor constraintEqualToConstant:60],
-        [downloadButton.heightAnchor constraintEqualToConstant:60],
-    ]];
+            [downloadButton.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:100],
+            [downloadButton.trailingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.trailingAnchor constant:-10],
+            [downloadButton.widthAnchor constraintEqualToConstant:120],
+            [downloadButton.heightAnchor constraintEqualToConstant:120],
+        ]];
 }
 %new - (void)downloadHDVideo:(AWEAwemeBaseViewController *)rootVC {
     NSString *as = rootVC.model.itemID;
@@ -1783,8 +1783,8 @@ static BOOL isAuthenticationShowed = FALSE;
         [NSLayoutConstraint activateConstraints:@[
             [downloadButton.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:100],
             [downloadButton.trailingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.trailingAnchor constant:-10],
-            [downloadButton.widthAnchor constraintEqualToConstant:50],
-            [downloadButton.heightAnchor constraintEqualToConstant:50],
+            [downloadButton.widthAnchor constraintEqualToConstant:100],
+            [downloadButton.heightAnchor constraintEqualToConstant:100],
         ]];
     }
 }
