@@ -1201,13 +1201,6 @@ static BOOL isAuthenticationShowed = FALSE;
     return countryNames[uppercaseCountryCode] ?: uppercaseCountryCode;
 }
 
-%new - (NSString *)formattedDateStringFromTimestamp:(NSTimeInterval)timestamp {
-    NSDate *date = [NSDate dateWithTimeIntervalSince1970:timestamp];
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    dateFormatter.dateFormat = @"yyyy-MM-dd"; 
-    return [dateFormatter stringFromDate:date];
-}
-
 - (void)layoutSubviews {
     %orig;
     if ([BHIManager uploadRegion]){
@@ -1227,9 +1220,12 @@ static BOOL isAuthenticationShowed = FALSE;
         NSString *countryID = model.region;
         NSString *countryName = [self emojiForCountryCode:countryID];
         
-        // 获取视频上传日期
+        // 获取视频上传日期并格式化
         NSNumber *createTime = [model createTime];
-        NSString *formattedDate = [self formattedDateStringFromTimestamp:[createTime doubleValue]];
+        NSDate *date = [NSDate dateWithTimeIntervalSince1970:[createTime doubleValue]];
+        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+        dateFormatter.dateFormat = @"yyyy-MM-dd";
+        NSString *formattedDate = [dateFormatter stringFromDate:date];
         
         // 创建包含国家名称和日期的文本
         NSString *fullText = [NSString stringWithFormat:@"%@ • %@", countryName, formattedDate];
