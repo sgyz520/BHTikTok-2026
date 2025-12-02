@@ -255,47 +255,41 @@ static BOOL isAuthenticationShowed = FALSE;
         clockImage.tintColor = [UIColor whiteColor];
         [clockImage setTranslatesAutoresizingMaskIntoConstraints:false];
         
-
-        for (int i = 0; i < [[self.contentView subviews] count]; i ++) {
-            UIView *j = [[self.contentView subviews] objectAtIndex:i];
-            if (j.tag == 1001) {
-                [j removeFromSuperview];
-            } 
-            else if (j.tag == 1002) {
-                [j removeFromSuperview];
-            }
-        }
+        // 同时显示点赞数和上传日期
         if ([BHIManager videoLikeCount]) {
-        [self.contentView addSubview:heartImage];
-        [NSLayoutConstraint activateConstraints:@[
-                [heartImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:110],
-                [heartImage.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:4],
-                [heartImage.widthAnchor constraintEqualToConstant:16],
-                [heartImage.heightAnchor constraintEqualToConstant:16],
-            ]];
-        [self.contentView addSubview:likeCountLabel];
-        [NSLayoutConstraint activateConstraints:@[
-                [likeCountLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:109],
-                [likeCountLabel.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:23],
-                [likeCountLabel.widthAnchor constraintEqualToConstant:200],
-                [likeCountLabel.heightAnchor constraintEqualToConstant:16],
-            ]];
+            [self.contentView addSubview:heartImage];
+            [NSLayoutConstraint activateConstraints:@[
+                    [heartImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:110],
+                    [heartImage.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:4],
+                    [heartImage.widthAnchor constraintEqualToConstant:16],
+                    [heartImage.heightAnchor constraintEqualToConstant:16],
+                ]];
+            [self.contentView addSubview:likeCountLabel];
+            [NSLayoutConstraint activateConstraints:@[
+                    [likeCountLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:109],
+                    [likeCountLabel.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:23],
+                    [likeCountLabel.widthAnchor constraintEqualToConstant:200],
+                    [likeCountLabel.heightAnchor constraintEqualToConstant:16],
+                ]];
         }
+        
         if ([BHIManager videoUploadDate]) {
-        [self.contentView addSubview:clockImage];
-        [NSLayoutConstraint activateConstraints:@[
-                [clockImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:128],
-                [clockImage.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:4],
-                [clockImage.widthAnchor constraintEqualToConstant:16],
-                [clockImage.heightAnchor constraintEqualToConstant:16],
-            ]];
-        [self.contentView addSubview:uploadDateLabel];
-        [NSLayoutConstraint activateConstraints:@[
-                [uploadDateLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:127],
-                [uploadDateLabel.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:23],
-                [uploadDateLabel.widthAnchor constraintEqualToConstant:200],
-                [uploadDateLabel.heightAnchor constraintEqualToConstant:16],
-            ]];
+            // 根据是否有点赞数来调整上传日期的位置
+            CGFloat topConstant = [BHIManager videoLikeCount] ? 128 : 110;
+            [self.contentView addSubview:clockImage];
+            [NSLayoutConstraint activateConstraints:@[
+                    [clockImage.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:topConstant],
+                    [clockImage.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:4],
+                    [clockImage.widthAnchor constraintEqualToConstant:16],
+                    [clockImage.heightAnchor constraintEqualToConstant:16],
+                ]];
+            [self.contentView addSubview:uploadDateLabel];
+            [NSLayoutConstraint activateConstraints:@[
+                    [uploadDateLabel.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor constant:topConstant-1],
+                    [uploadDateLabel.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor constant:23],
+                    [uploadDateLabel.widthAnchor constraintEqualToConstant:200],
+                    [uploadDateLabel.heightAnchor constraintEqualToConstant:16],
+                ]];
         }
     }
 }
@@ -405,18 +399,47 @@ static NSString *formattedDateStringFromTimestamp(NSTimeInterval timestamp) {
         NSString *code = countryCode ?: selectedRegion[@"code"];
         NSString *countryName = countryNameForCountryCode(code);
         if (countryName) {
-            // 如果启用了视频上传日期功能，则在国家名称后添加日期
-            if ([BHIManager videoUploadDate]) {
-                AWEFeedCellViewController* rootVC = self.yy_viewController;
-                AWEAwemeModel *model = rootVC.model;
-                NSNumber *createTime = [model createTime];
-                NSString *formattedDate = formattedDateStringFromTimestamp([createTime doubleValue]);
-                return [NSString stringWithFormat:@"%@ • %@", countryName, formattedDate];
-            }
+            // 返回国家名称，日期将在下面单独显示
             return countryName;
         }
     }
     return %orig;
+}
+
+- (void)layoutSubviews {
+    %orig;
+    
+    // 如果启用了视频上传日期功能，则添加日期标签
+    if ([BHIManager uploadRegion] && [BHIManager videoUploadDate]) {
+        // 先移除可能已存在的日期标签
+        for (UIView *subview in self.subviews) {
+            if (subview.tag == 9999) {
+                [subview removeFromSuperview];
+            }
+        }
+        
+        // 获取视频创建时间
+        AWEFeedCellViewController* rootVC = self.yy_viewController;
+        AWEAwemeModel *model = rootVC.model;
+        NSNumber *createTime = [model createTime];
+        NSString *formattedDate = formattedDateStringFromTimestamp([createTime doubleValue]);
+        
+        // 创建并添加日期标签
+        UILabel *dateLabel = [[UILabel alloc] init];
+        dateLabel.text = [NSString stringWithFormat:@"上传 %@", formattedDate];
+        dateLabel.textColor = [UIColor whiteColor];
+        dateLabel.font = [UIFont systemFontOfSize:12.0];
+        dateLabel.tag = 9999;
+        dateLabel.translatesAutoresizingMaskIntoConstraints = NO;
+        [self addSubview:dateLabel];
+        
+        // 设置约束
+        [NSLayoutConstraint activateConstraints:@[
+            [dateLabel.topAnchor constraintEqualToAnchor:self.bottomAnchor constant:2],
+            [dateLabel.leadingAnchor constraintEqualToAnchor:self.leadingAnchor],
+            [dateLabel.trailingAnchor constraintEqualToAnchor:self.trailingAnchor]
+        ]];
+    }
 }
 %end
 
