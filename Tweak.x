@@ -1,6 +1,22 @@
 #import "TikTokHeaders.h"
 
-NSArray *jailbreakPaths;
+static NSArray *jailbreakPaths;
+
+// Helper function to get top view controller
+UIViewController *topMostController() {
+    UIViewController *topController = [UIApplication sharedApplication].keyWindow.rootViewController;
+    
+    while (topController.presentedViewController) {
+        topController = topController.presentedViewController;
+    }
+    
+    return topController;
+}
+
+// Helper function to check if device is iPad
+BOOL is_iPad() {
+    return [[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad;
+}
 
 static void showConfirmation(void (^okHandler)(void)) {
   [%c(AWEUIAlertView) showAlertWithTitle:@"BHTikTok, Hi" description:@"Are you sure?" image:nil actionButtonTitle:@"Yes" cancelButtonTitle:@"No" actionBlock:^{
@@ -1473,53 +1489,7 @@ static BOOL isAuthenticationShowed = FALSE;
         [%c(AWEUIAlertView) showAlertWithTitle:@"BHTikTok, Hi" description:@"The video dosen't have music to download." image:nil actionButtonTitle:@"OK" cancelButtonTitle:nil actionBlock:nil cancelBlock:nil];
     }
 }
-%new - (void) downloadButtonHandler:(UIButton *)sender {
-    AWEAwemeBaseViewController *rootVC = self.viewController;
-    if ([rootVC isKindOfClass:%c(AWEFeedCellViewController)]) {
 
-         UIAction *action1 = [UIAction actionWithTitle:@"Download Video"
-                                            image:[UIImage systemImageNamed:@"film"]
-                                       identifier:nil
-                                          handler:^(__kindof UIAction * _Nonnull action) {
-                                            [self downloadVideo:rootVC];
-    }];
-        UIAction *action0 = [UIAction actionWithTitle:@"Download HD Video"
-                                            image:[UIImage systemImageNamed:@"film"]
-                                       identifier:nil
-                                          handler:^(__kindof UIAction * _Nonnull action) {
-                                            [self downloadHDVideo:rootVC];
-    }];
-    UIAction *action2 = [UIAction actionWithTitle:@"Download Music"
-                                            image:[UIImage systemImageNamed:@"music.note"]
-                                       identifier:nil
-                                          handler:^(__kindof UIAction * _Nonnull action) {
-                                            [self downloadMusic:rootVC];
-    }];
-    UIAction *action3 = [UIAction actionWithTitle:@"Copy Music link"
-                                            image:[UIImage systemImageNamed:@"link"]
-                                       identifier:nil
-                                          handler:^(__kindof UIAction * _Nonnull action) {
-                                            [self copyMusic:rootVC];
-    }];
-    UIAction *action4 = [UIAction actionWithTitle:@"Copy Video link"
-                                            image:[UIImage systemImageNamed:@"link"]
-                                       identifier:nil
-                                          handler:^(__kindof UIAction * _Nonnull action) {
-                                            [self copyVideo:rootVC];
-    }];
-    UIAction *action5 = [UIAction actionWithTitle:@"Copy Decription"
-                                            image:[UIImage systemImageNamed:@"note.text"]
-                                       identifier:nil
-                                          handler:^(__kindof UIAction * _Nonnull action) {
-                                            [self copyDecription:rootVC];
-    }];
-    UIMenu *downloadMenu = [UIMenu menuWithTitle:@"Downloads Menu"
-                                        children:@[action1, action0,action2]];
-    UIMenu *copyMenu = [UIMenu menuWithTitle:@"Copy Menu"
-                                        children:@[action3, action4, action5]];
-    UIMenu *mainMenu = [UIMenu menuWithTitle:@"" children:@[downloadMenu, copyMenu]];
-    [sender setMenu:mainMenu];
-    sender.showsMenuAsPrimaryAction = YES;
     } else if ([self.viewController isKindOfClass:%c(TTKPhotoAlbumDetailCellController)]) {
         TTKPhotoAlbumDetailCellController *rootVC = self.viewController;
         AWEPlayPhotoAlbumViewController *photoAlbumController = [rootVC valueForKey:@"_photoAlbumController"];
@@ -2078,6 +2048,7 @@ static BOOL isAuthenticationShowed = FALSE;
 	return (id (^)(id)) ^{
 	};
 }
+%end
 %end
 
 

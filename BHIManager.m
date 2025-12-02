@@ -17,6 +17,12 @@
 + (BOOL)hideElementButton {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"remove_elements_button"];
 }
++ (BOOL)elementsHiddenGlobal {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"elements_hidden_global"];
+}
++ (void)setElementsHiddenGlobal:(BOOL)hidden {
+    [[NSUserDefaults standardUserDefaults] setBool:hidden forKey:@"elements_hidden_global"];
+}
 + (BOOL)uploadRegion {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"upload_region"];
 }
