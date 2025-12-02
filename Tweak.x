@@ -1130,7 +1130,6 @@ static BOOL isAuthenticationShowed = FALSE;
         @"LY": @"利比亚",
         @"SD": @"苏丹",
         @"ET": @"埃塞俄比亚",
-        @"MA": @"摩洛哥",
         @"MW": @"马拉维",
         @"ZM": @"赞比亚",
         @"ZW": @"津巴布韦",
