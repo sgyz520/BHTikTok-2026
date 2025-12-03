@@ -1659,9 +1659,9 @@ static BOOL isAuthenticationShowed = FALSE;
             [self copyDecription:rootVC];
         }];
         
-        UIMenu *downloadMenu = [UIMenu menuWithTitle:@"Downloads Menu"
+        UIMenu *downloadMenu = [UIMenu menuWithTitle:BHTikTokLocalizedString(@"Downloads Menu", nil)
                                             children:@[hdAction, sdAction, musicAction]];
-        UIMenu *copyMenu = [UIMenu menuWithTitle:@"Copy Menu"
+        UIMenu *copyMenu = [UIMenu menuWithTitle:BHTikTokLocalizedString(@"Copy Menu", nil)
                                         children:@[copyMusicAction, copyVideoAction, copyDescAction]];
         UIMenu *mainMenu = [UIMenu menuWithTitle:@"" children:@[downloadMenu, copyMenu]];
         
