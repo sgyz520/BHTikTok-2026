@@ -5,23 +5,29 @@ static NSArray *jailbreakPaths;
 
 // 自定义本地化加载函数
 NSString *BHTikTokLocalizedString(NSString *key, NSString *comment) {
-    NSBundle *bundle = [NSBundle mainBundle];
-    NSString *path = [bundle pathForResource:@"zh-Hans" ofType:@"lproj"];
-    if (!path) {
-        // 如果TikTok应用中没有zh-Hans.lproj，尝试从我们的支持目录加载
-        NSString *supportPath = @"/Library/Application Support/BHTikTok/zh-Hans.lproj";
-        if ([[NSFileManager defaultManager] fileExistsAtPath:supportPath]) {
-            bundle = [NSBundle bundleWithPath:supportPath];
+    // 优先从我们的支持目录加载本地化文件
+    NSString *supportPath = @"/Library/Application Support/BHTikTok/zh-Hans.lproj";
+    NSBundle *bundle = [NSBundle bundleWithPath:supportPath];
+    
+    // 如果支持目录中的文件不存在，尝试从动态库目录加载
+    if (!bundle) {
+        NSString *tweakPath = @"/Library/MobileSubstrate/DynamicLibraries/BHTikTok.dylib";
+        NSBundle *tweakBundle = [NSBundle bundleWithPath:tweakPath];
+        if (tweakBundle) {
+            NSString *localizedPath = [tweakBundle pathForResource:@"zh-Hans" ofType:@"lproj"];
+            if (localizedPath) {
+                bundle = [NSBundle bundleWithPath:localizedPath];
+            }
         }
-    } else {
-        bundle = [NSBundle bundleWithPath:path];
     }
     
-    NSString *localizedString = [bundle localizedStringForKey:key value:nil table:@"Localizable"];
-    if (!localizedString || [localizedString isEqualToString:key]) {
-        // 如果没有找到翻译，返回原始键
-        return key;
+    // 如果都失败了，使用主bundle
+    if (!bundle) {
+        bundle = [NSBundle mainBundle];
     }
+    
+    // 加载本地化字符串
+    NSString *localizedString = [bundle localizedStringForKey:key value:key table:@"Localizable"];
     return localizedString;
 }
 
