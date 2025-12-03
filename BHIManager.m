@@ -33,7 +33,7 @@
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"stop_play"];
 }
 + (BOOL)progressBar {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"show_porgress_bar"];
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"show_progress_bar"];
 }
 + (BOOL)transparentCommnet {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"transparent_commnet"];

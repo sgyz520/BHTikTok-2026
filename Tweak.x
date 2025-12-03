@@ -50,7 +50,7 @@ static void showConfirmation(void (^okHandler)(void)) {
         [[NSUserDefaults standardUserDefaults] setBool:true forKey:@"hide_ads"];
         [[NSUserDefaults standardUserDefaults] setBool:true forKey:@"download_button"];
         [[NSUserDefaults standardUserDefaults] setBool:true forKey:@"remove_elements_button"];
-        [[NSUserDefaults standardUserDefaults] setBool:true forKey:@"show_porgress_bar"];
+        [[NSUserDefaults standardUserDefaults] setBool:true forKey:@"show_progress_bar"];
         [[NSUserDefaults standardUserDefaults] setBool:true forKey:@"save_profile"];
         [[NSUserDefaults standardUserDefaults] setBool:true forKey:@"copy_profile_information"];
         [[NSUserDefaults standardUserDefaults] setBool:true forKey:@"extended_bio"];

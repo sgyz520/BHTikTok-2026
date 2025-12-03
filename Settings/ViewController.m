@@ -132,7 +132,7 @@
             case 7:
                 return [self createSwitchCellWithTitle:BHTikTokLocalizedString(@"Show Progress Bar", nil)
                                                 Detail:BHTikTokLocalizedString(@"Display progress bar on video playback", nil)
-                                                   Key:@"show_porgress_bar"];
+                                                   Key:@"show_progress_bar"];
             case 8:
                 return [self createSwitchCellWithTitle:BHTikTokLocalizedString(@"Transparent Comments", nil)
                                                 Detail:BHTikTokLocalizedString(@"Make comments transparent", nil)
