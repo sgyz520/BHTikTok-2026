@@ -6,6 +6,7 @@
 //
 
 #import "PlaybackSpeed.h"
+#import "BHTikTokLocalization.h"
 
 @interface PlaybackSpeed ()
 @property (nonatomic, strong) UITableView *staticTable;
@@ -18,7 +19,7 @@
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor systemBackgroundColor];
     self.speeds = @[@0.5, @1.0, @1.5, @2.0];
-    self.title = NSLocalizedString(@"Select Speed", nil);
+    self.title = BHTikTokLocalizedString(@"Select Speed", nil);
     self.staticTable = [[UITableView alloc] initWithFrame:CGRectZero];
     self.staticTable.translatesAutoresizingMaskIntoConstraints = NO;
     [self.staticTable registerClass:[UITableViewCell class] forCellReuseIdentifier:@"CellIdentifier"];
@@ -53,9 +54,9 @@
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     [defaults setValue:selectedSpeed forKey:@"playback_speed"];
     [defaults synchronize];
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Live Option Selected", nil) message:[NSString stringWithFormat:NSLocalizedString(@"You selected: %@", nil), selectedSpeed]
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:BHTikTokLocalizedString(@"Live Option Selected", nil) message:[NSString stringWithFormat:BHTikTokLocalizedString(@"You selected: %@", nil), selectedSpeed]
                                                             preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", nil) style:UIAlertActionStyleDefault handler:nil];
+    UIAlertAction *okAction = [UIAlertAction actionWithTitle:BHTikTokLocalizedString(@"OK", nil) style:UIAlertActionStyleDefault handler:nil];
     [alert addAction:okAction];
     [self presentViewController:alert animated:YES completion:nil];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"RegionSelectedNotification"
