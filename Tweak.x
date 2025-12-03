@@ -2,10 +2,32 @@
 
 static NSArray *jailbreakPaths;
 
+// 自定义本地化加载函数
+static NSString *BHTikTokLocalizedString(NSString *key, NSString *comment) {
+    NSBundle *bundle = [NSBundle mainBundle];
+    NSString *path = [bundle pathForResource:@"zh-Hans" ofType:@"lproj"];
+    if (!path) {
+        // 如果TikTok应用中没有zh-Hans.lproj，尝试从我们的支持目录加载
+        NSString *supportPath = @"/Library/Application Support/BHTikTok/zh-Hans.lproj";
+        if ([[NSFileManager defaultManager] fileExistsAtPath:supportPath]) {
+            bundle = [NSBundle bundleWithPath:supportPath];
+        }
+    } else {
+        bundle = [NSBundle bundleWithPath:path];
+    }
+    
+    NSString *localizedString = [bundle localizedStringForKey:key value:nil table:@"Localizable"];
+    if (!localizedString || [localizedString isEqualToString:key]) {
+        // 如果没有找到翻译，返回原始键
+        return key;
+    }
+    return localizedString;
+}
+
 // Helper functions are already defined in TikTokHeaders.h
 
 static void showConfirmation(void (^okHandler)(void)) {
-  [%c(AWEUIAlertView) showAlertWithTitle:NSLocalizedString(@"BHTikTok, Hi", nil) description:NSLocalizedString(@"Are you sure?", nil) image:nil actionButtonTitle:NSLocalizedString(@"Yes", nil) cancelButtonTitle:NSLocalizedString(@"No", nil) actionBlock:^{
+  [%c(AWEUIAlertView) showAlertWithTitle:BHTikTokLocalizedString(@"BHTikTok, Hi", nil) description:BHTikTokLocalizedString(@"Are you sure?", nil) image:nil actionButtonTitle:BHTikTokLocalizedString(@"Yes", nil) cancelButtonTitle:BHTikTokLocalizedString(@"No", nil) actionBlock:^{
     okHandler();
   } cancelBlock:nil];
 }
@@ -176,7 +198,7 @@ static BOOL isAuthenticationShowed = FALSE;
         NSNumber *userVideoCount = [user visibleVideosCount];
         if (userVideoCount){
             UILabel *userVideoCountLabel = [[UILabel alloc] initWithFrame:CGRectMake(0,2,100,20.5)];
-            userVideoCountLabel.text = [NSString stringWithFormat:NSLocalizedString(@"Video Count: %@", nil), userVideoCount];
+            userVideoCountLabel.text = [NSString stringWithFormat:BHTikTokLocalizedString(@"Video Count: %@", nil), userVideoCount];
             userVideoCountLabel.font = [UIFont systemFontOfSize:9.0];
             [self addSubview:userVideoCountLabel];
         }
@@ -198,7 +220,7 @@ static BOOL isAuthenticationShowed = FALSE;
 }
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
     if (sender.state == UIGestureRecognizerStateBegan) {
-        [%c(AWEUIAlertView) showAlertWithTitle:NSLocalizedString(@"Save profile image", nil) description:NSLocalizedString(@"Do you want to save this image", nil) image:nil actionButtonTitle:NSLocalizedString(@"Yes", nil) cancelButtonTitle:NSLocalizedString(@"No", nil) actionBlock:^{
+        [%c(AWEUIAlertView) showAlertWithTitle:BHTikTokLocalizedString(@"Save profile image", nil) description:BHTikTokLocalizedString(@"Do you want to save this image", nil) image:nil actionButtonTitle:BHTikTokLocalizedString(@"Yes", nil) cancelButtonTitle:BHTikTokLocalizedString(@"No", nil) actionBlock:^{
             UIImageWriteToSavedPhotosAlbum([self bd_baseImage], self, @selector(image:didFinishSavingWithError:contextInfo:), nil);
   } cancelBlock:nil];
     }
@@ -264,8 +286,8 @@ static BOOL isAuthenticationShowed = FALSE;
         TTKSettingsBaseCellPlugin *BHTikTokSettingsPluginCell = [[%c(TTKSettingsBaseCellPlugin) alloc] initWithPluginContext:self.context];
 
         AWESettingItemModel *BHTikTokSettingsItemModel = [[%c(AWESettingItemModel) alloc] initWithIdentifier:@"bhtiktok_settings"];
-        [BHTikTokSettingsItemModel setTitle:NSLocalizedString(@"BHTikTok++ settings", nil)];
-        [BHTikTokSettingsItemModel setDetail:NSLocalizedString(@"BHTikTok++ settings", nil)];
+        [BHTikTokSettingsItemModel setTitle:BHTikTokLocalizedString(@"BHTikTok++ settings", nil)];
+        [BHTikTokSettingsItemModel setDetail:BHTikTokLocalizedString(@"BHTikTok++ settings", nil)];
         [BHTikTokSettingsItemModel setIconImage:[UIImage systemImageNamed:@"gear"]];
         [BHTikTokSettingsItemModel setType:99];
 

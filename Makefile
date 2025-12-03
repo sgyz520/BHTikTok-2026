@@ -20,6 +20,14 @@ include $(THEOS_MAKE_PATH)/tweak.mk
 after-stage::
 	$(ECHO_NOTHING)mkdir -p "$(THEOS_STAGING_DIR)/Library/Application Support/BHTikTok"$(ECHO_END)
 	$(ECHO_NOTHING)cp -r zh-Hans.lproj "$(THEOS_STAGING_DIR)/Library/Application Support/BHTikTok/"$(ECHO_END)
-	# 将本地化文件复制到TikTok应用bundle中
-	$(ECHO_NOTHING)mkdir -p "$(THEOS_STAGING_DIR)/var/mobile/Containers/Data/Application/TikTok.app"$(ECHO_END)
-	$(ECHO_NOTHING)cp -r zh-Hans.lproj "$(THEOS_STAGING_DIR)/var/mobile/Containers/Data/Application/TikTok.app/"$(ECHO_END)
+	# 将本地化文件复制到TikTok应用的bundle中，覆盖原有的本地化文件
+	$(ECHO_NOTHING)mkdir -p "$(THEOS_STAGING_DIR)/var/mobile/Containers/Data/Application/*/TikTok.app"$(ECHO_END)
+	$(ECHO_NOTHING)cp -r zh-Hans.lproj "$(THEOS_STAGING_DIR)/var/mobile/Containers/Data/Application/*/TikTok.app/"$(ECHO_END)
+	# 创建安装脚本，确保本地化文件在安装时正确复制到TikTok应用中
+	$(ECHO_NOTHING)mkdir -p "$(THEOS_STAGING_DIR)/DEBIAN"$(ECHO_END)
+	$(ECHO_NOTHING)echo "#!/bin/bash" > "$(THEOS_STAGING_DIR)/DEBIAN/postinst"$(ECHO_END)
+	$(ECHO_NOTHING)echo "find /var/mobile/Containers/Data/Application -name \"TikTok.app\" -type d | while read appdir; do" >> "$(THEOS_STAGING_DIR)/DEBIAN/postinst"$(ECHO_END)
+	$(ECHO_NOTHING)echo "  cp -r /Library/Application\\ Support/BHTikTok/zh-Hans.lproj \"\$$appdir/\" 2>/dev/null || true" >> "$(THEOS_STAGING_DIR)/DEBIAN/postinst"$(ECHO_END)
+	$(ECHO_NOTHING)echo "done" >> "$(THEOS_STAGING_DIR)/DEBIAN/postinst"$(ECHO_END)
+	$(ECHO_NOTHING)echo "exit 0" >> "$(THEOS_STAGING_DIR)/DEBIAN/postinst"$(ECHO_END)
+	$(ECHO_NOTHING)chmod +x "$(THEOS_STAGING_DIR)/DEBIAN/postinst"$(ECHO_END)

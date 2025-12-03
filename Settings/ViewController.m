@@ -22,7 +22,7 @@
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor systemBackgroundColor];
     
-    self.title = NSLocalizedString(@"BHTikTok++ Settings", nil);
+    self.title = BHTikTokLocalizedString(@"BHTikTok++ Settings", nil);
     self.staticTable = [[UITableView alloc] initWithFrame:CGRectZero ];
     self.staticTable.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:self.staticTable];
@@ -343,7 +343,7 @@
                 UITableViewCell *liveAction = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
                 liveAction.textLabel.text = NSLocalizedString(@"Actions", nil);
                 NSString *selectedLiveAction = [defaults valueForKey:@"live_action"];
-                NSArray *liveFuncTitles = @[NSLocalizedString(@"Default", nil), NSLocalizedString(@"BHTikTok++ Settings", nil), NSLocalizedString(@"Playback Speed", nil)];
+                NSArray *liveFuncTitles = @[BHTikTokLocalizedString(@"Default", nil), BHTikTokLocalizedString(@"BHTikTok++ Settings", nil), BHTikTokLocalizedString(@"Playback Speed", nil)];
                 if (selectedLiveAction != nil) {
                     liveAction.detailTextLabel.text = [NSString stringWithFormat:@"%@", [liveFuncTitles objectAtIndex:[selectedLiveAction integerValue]]];
                 }
