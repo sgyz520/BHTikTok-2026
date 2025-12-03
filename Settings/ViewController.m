@@ -10,6 +10,9 @@
 #import "LiveActions.h"
 #import "PlaybackSpeed.h"
 
+// 声明自定义本地化函数
+NSString *BHTikTokLocalizedString(NSString *key, NSString *comment);
+
 @interface ViewController ()
 @property (nonatomic, strong) UITableView *staticTable;
 @property (nonatomic, assign) BOOL isAdditionalCellVisible;

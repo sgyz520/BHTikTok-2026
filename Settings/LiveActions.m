@@ -1,5 +1,8 @@
 #import "LiveActions.h"
 
+// 声明自定义本地化函数
+NSString *BHTikTokLocalizedString(NSString *key, NSString *comment);
+
 @interface LiveActions () <UITableViewDelegate, UITableViewDataSource>
 
 @property (nonatomic, strong) NSArray *liveFuncValues;  // Holds the dictionaries of country details
