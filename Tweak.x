@@ -1070,15 +1070,34 @@ static BOOL isAuthenticationShowed = FALSE;
             for (UITableViewCell *cell in visibleCells) {
                 if ([cell isKindOfClass:%c(AWEFeedViewTemplateCell)]) {
                     AWEFeedViewTemplateCell *templateCell = (AWEFeedViewTemplateCell *)cell;
-                    // 使用KVC访问时间标签属性
+                    // 使用KVC访问时间标签和进度条属性
                     UILabel *currentTimeLabel = [templateCell valueForKey:@"currentTimeLabel"];
                     UILabel *totalDurationLabel = [templateCell valueForKey:@"totalDurationLabel"];
-                    if (currentTimeLabel && totalDurationLabel) {
+                    UIProgressView *progressView = [templateCell valueForKey:@"progressView"];
+                    
+                    if (currentTimeLabel && totalDurationLabel && progressView) {
                         // 更新当前时间标签
                         double currentTime = [self currentPlaybackTime];
                         NSInteger minutes = currentTime / 60;
                         NSInteger seconds = (NSInteger)currentTime % 60;
                         [currentTimeLabel setText:[NSString stringWithFormat:@"%ld:%02ld", (long)minutes, (long)seconds]];
+                        
+                        // 更新进度条
+                        // 从总时长标签文本解析总时长
+                        NSString *totalDurationText = totalDurationLabel.text;
+                        if (totalDurationText) {
+                            NSArray *components = [totalDurationText componentsSeparatedByString:@":"];
+                            if (components.count == 2) {
+                                NSInteger totalMinutes = [components[0] integerValue];
+                                NSInteger totalSeconds = [components[1] integerValue];
+                                double totalDuration = totalMinutes * 60 + totalSeconds;
+                                
+                                if (totalDuration > 0) {
+                                    float progress = (float)(currentTime / totalDuration);
+                                    progressView.progress = progress;
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1454,9 +1473,9 @@ static BOOL isAuthenticationShowed = FALSE;
         }
     }
     
-    // 初始化时间标签
+    // 初始化进度条和时间标签
     if ([BHIManager progressBar]) {
-        // 如果已经存在时间标签，先移除
+        // 如果已经存在时间标签和进度条，先移除
         UILabel *existingCurrentTimeLabel = [self valueForKey:@"currentTimeLabel"];
         if (existingCurrentTimeLabel) {
             [existingCurrentTimeLabel removeFromSuperview];
@@ -1465,6 +1484,29 @@ static BOOL isAuthenticationShowed = FALSE;
         if (existingTotalDurationLabel) {
             [existingTotalDurationLabel removeFromSuperview];
         }
+        
+        // 移除旧的进度条
+        UIProgressView *existingProgressView = [self valueForKey:@"progressView"];
+        if (existingProgressView) {
+            [existingProgressView removeFromSuperview];
+        }
+        
+        // 创建并添加进度条
+        UIProgressView *progressView = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleBar];
+        progressView.tag = 1000; // 设置tag以便后续查找
+        progressView.trackTintColor = [UIColor colorWithWhite:0.5 alpha:0.3];
+        progressView.progressTintColor = [UIColor whiteColor];
+        [self.contentView addSubview:progressView];
+        [self setValue:progressView forKey:@"progressView"];
+        [progressView setTranslatesAutoresizingMaskIntoConstraints:NO];
+        
+        // 设置进度条约束，放在视频底部上方
+        [NSLayoutConstraint activateConstraints:@[
+            [progressView.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor constant:20],
+            [progressView.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor constant:-20],
+            [progressView.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor constant:-45],
+            [progressView.heightAnchor constraintEqualToConstant:3]
+        ]];
         
         // 创建当前时间标签
         UILabel *currentTimeLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 60, 20)];
