@@ -780,19 +780,62 @@ static BOOL isAuthenticationShowed = FALSE;
 %hook AWEPlayVideoPlayerController // auto play next video and stop looping video
 - (void)playerWillLoopPlaying:(id)arg1 {
     if ([BHIManager autoPlay]) {
-        // 尝试直接从容器获取父视图控制器并调用scrollToNextVideo
+        // 方法1: 直接从容器获取父视图控制器并调用scrollToNextVideo（参考skipRecommendations的实现方式）
+        if (self.container && [[self container] parentViewController]) {
+            UIViewController *parentVC = [[self container] parentViewController];
+            // 添加类型检查，确保父视图控制器是AWENewFeedTableViewController类型
+            if ([parentVC isKindOfClass:%c(AWENewFeedTableViewController)]) {
+                AWENewFeedTableViewController *rootVC = (AWENewFeedTableViewController *)parentVC;
+                if (rootVC.view.window) {
+                    // 直接调用scrollToNextVideo方法
+                    [rootVC scrollToNextVideo];
+                    return;
+                }
+            }
+        }
+        
+        // 方法2: 遍历容器的父视图控制器层次结构
         if (self.container) {
-            // 遍历视图控制器层次结构，寻找AWENewFeedTableViewController
             UIViewController *currentVC = self.container.parentViewController;
             for (int i = 0; i < 5 && currentVC; i++) {
                 if ([currentVC isKindOfClass:%c(AWENewFeedTableViewController)]) {
-                    // 确保当前视图控制器正在显示
                     if (currentVC.view.window) {
-                        [currentVC performSelector:@selector(scrollToNextVideo) withObject:nil afterDelay:0.1];
+                        [currentVC scrollToNextVideo];
                         return;
                     }
                 }
                 currentVC = currentVC.parentViewController;
+            }
+        }
+        
+        // 方法3: 直接从UIApplication的keyWindow获取根视图控制器并遍历
+        UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
+        if (keyWindow) {
+            UIViewController *rootVC = keyWindow.rootViewController;
+            // 创建一个队列用于广度优先搜索
+            NSMutableArray *vcQueue = [NSMutableArray arrayWithObject:rootVC];
+            
+            while ([vcQueue count] > 0) {
+                UIViewController *currentVC = [vcQueue firstObject];
+                [vcQueue removeObjectAtIndex:0];
+                
+                // 检查当前视图控制器是否是我们要找的类型
+                if ([currentVC isKindOfClass:%c(AWENewFeedTableViewController)]) {
+                    if (currentVC.view.window) {
+                        [currentVC scrollToNextVideo];
+                        return;
+                    }
+                }
+                
+                // 将当前视图控制器的子视图控制器加入队列
+                if ([currentVC respondsToSelector:@selector(childViewControllers)]) {
+                    [vcQueue addObjectsFromArray:currentVC.childViewControllers];
+                }
+                
+                // 检查当前视图控制器是否有presentedViewController
+                if (currentVC.presentedViewController) {
+                    [vcQueue addObject:currentVC.presentedViewController];
+                }
             }
         }
     }
@@ -809,7 +852,7 @@ static BOOL isAuthenticationShowed = FALSE;
     if ([BHIManager stopPlay]) {
         %orig(0);
     }else {
-        %orig;
+        %orig(arg1);
     }
 }
 %end
