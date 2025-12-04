@@ -1029,7 +1029,22 @@ static BOOL isAuthenticationShowed = FALSE;
 
 @implementation BHVideoTimeAccessor
 - (AVPlayer *)findPlayer {
-    guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return nil }
+    UIWindow *window = nil;
+    
+    // 查找当前key window
+    for (UIWindow *w in [[UIApplication sharedApplication] windows]) {
+        if (w.isKeyWindow) {
+            window = w;
+            break;
+        }
+    }
+    
+    if (!window) {
+        window = [[UIApplication sharedApplication] keyWindow];
+    }
+    
+    if (!window) return nil;
+    
     __block AVPlayer *result = nil;
     
     // 深度优先搜索查找AVPlayer
@@ -1111,12 +1126,16 @@ static BOOL isAuthenticationShowed = FALSE;
 - (void)swipeToNextWithCompletion:(void (^)(BOOL))completion {
     dispatch_async(dispatch_get_main_queue(), ^{        
         // 获取当前key window
-        UIWindow *keyWindow = UIApplication.shared.windows.firstObject;
-        for (UIWindow *window in UIApplication.shared.windows) {
+        UIWindow *keyWindow = nil;
+        for (UIWindow *window in [[UIApplication sharedApplication] windows]) {
             if (window.isKeyWindow) {
                 keyWindow = window;
                 break;
             }
+        }
+        
+        if (!keyWindow) {
+            keyWindow = [[UIApplication sharedApplication] keyWindow];
         }
         
         // 查找滚动视图
@@ -1270,33 +1289,36 @@ static BOOL isAuthenticationShowed = FALSE;
     [self addSubview:self.statusLabel];
     
     // 使用Auto Layout布局
-    autoSwipeLabel.translatesAutoresizingMaskIntoConstraints = false;
-    self.autoSwipeSwitch.translatesAutoresizingMaskIntoConstraints = false;
-    self.currentTimeLabel.translatesAutoresizingMaskIntoConstraints = false;
-    self.durationLabel.translatesAutoresizingMaskIntoConstraints = false;
-    self.statusLabel.translatesAutoresizingMaskIntoConstraints = false;
+    autoSwipeLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    self.autoSwipeSwitch.translatesAutoresizingMaskIntoConstraints = NO;
+    self.currentTimeLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    self.durationLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    self.statusLabel.translatesAutoresizingMaskIntoConstraints = NO;
     
-    NSLayoutConstraint.activate([
-        // 自动滑动开关和标签
-        autoSwipeLabel.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 12),
-        autoSwipeLabel.topAnchor.constraint(equalTo: self.topAnchor, constant: 6),
-        
-        self.autoSwipeSwitch.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -12),
-        self.autoSwipeSwitch.centerYAnchor.constraint(equalTo: autoSwipeLabel.centerYAnchor),
-        
-        // 当前时间标签约束
-        self.currentTimeLabel.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 12),
-        self.currentTimeLabel.topAnchor.constraint(equalTo: autoSwipeLabel.bottomAnchor, constant: 2),
-        
-        // 总时长标签约束
-        self.durationLabel.leadingAnchor.constraint(equalTo: self.currentTimeLabel.trailingAnchor, constant: 10),
-        self.durationLabel.centerYAnchor.constraint(equalTo: self.currentTimeLabel.centerYAnchor),
-        
-        // 播放状态标签约束
-        self.statusLabel.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -12),
-        self.statusLabel.centerYAnchor.constraint(equalTo: self.currentTimeLabel.centerYAnchor),
-        self.statusLabel.leadingAnchor.constraint(equalTo: self.durationLabel.trailingAnchor, constant: 10)
-    ]);
+    // 自动滑动开关和标签约束
+    NSLayoutConstraint *autoSwipeLabelLeading = [NSLayoutConstraint constraintWithItem:autoSwipeLabel attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeLeading multiplier:1.0 constant:12];
+    NSLayoutConstraint *autoSwipeLabelTop = [NSLayoutConstraint constraintWithItem:autoSwipeLabel attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeTop multiplier:1.0 constant:6];
+    
+    NSLayoutConstraint *autoSwipeSwitchTrailing = [NSLayoutConstraint constraintWithItem:self.autoSwipeSwitch attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeTrailing multiplier:1.0 constant:-12];
+    NSLayoutConstraint *autoSwipeSwitchCenterY = [NSLayoutConstraint constraintWithItem:self.autoSwipeSwitch attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:autoSwipeLabel attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0];
+    
+    // 当前时间标签约束
+    NSLayoutConstraint *currentTimeLabelLeading = [NSLayoutConstraint constraintWithItem:self.currentTimeLabel attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeLeading multiplier:1.0 constant:12];
+    NSLayoutConstraint *currentTimeLabelTop = [NSLayoutConstraint constraintWithItem:self.currentTimeLabel attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:autoSwipeLabel attribute:NSLayoutAttributeBottom multiplier:1.0 constant:2];
+    
+    // 总时长标签约束
+    NSLayoutConstraint *durationLabelLeading = [NSLayoutConstraint constraintWithItem:self.durationLabel attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:self.currentTimeLabel attribute:NSLayoutAttributeTrailing multiplier:1.0 constant:10];
+    NSLayoutConstraint *durationLabelCenterY = [NSLayoutConstraint constraintWithItem:self.durationLabel attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self.currentTimeLabel attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0];
+    
+    // 播放状态标签约束
+    NSLayoutConstraint *statusLabelTrailing = [NSLayoutConstraint constraintWithItem:self.statusLabel attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeTrailing multiplier:1.0 constant:-12];
+    NSLayoutConstraint *statusLabelCenterY = [NSLayoutConstraint constraintWithItem:self.statusLabel attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self.currentTimeLabel attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0];
+    NSLayoutConstraint *statusLabelLeading = [NSLayoutConstraint constraintWithItem:self.statusLabel attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:self.durationLabel attribute:NSLayoutAttributeTrailing multiplier:1.0 constant:10];
+    
+    // 激活所有约束
+    [self addConstraints:@[autoSwipeLabelLeading, autoSwipeLabelTop, autoSwipeSwitchTrailing, autoSwipeSwitchCenterY, 
+                           currentTimeLabelLeading, currentTimeLabelTop, durationLabelLeading, durationLabelCenterY, 
+                           statusLabelTrailing, statusLabelCenterY, statusLabelLeading]];
 }
 
 - (void)show {
@@ -1304,14 +1326,19 @@ static BOOL isAuthenticationShowed = FALSE;
     [self removeFromSuperview];
     
     // 添加到当前key window
-    if (UIApplication.shared.windows.count > 0) {
-        UIWindow *keyWindow = UIApplication.shared.windows.firstObject;
-        for (UIWindow *window in UIApplication.shared.windows) {
-            if (window.isKeyWindow) {
-                keyWindow = window;
-                break;
-            }
+    UIWindow *keyWindow = nil;
+    for (UIWindow *window in [[UIApplication sharedApplication] windows]) {
+        if (window.isKeyWindow) {
+            keyWindow = window;
+            break;
         }
+    }
+    
+    if (!keyWindow) {
+        keyWindow = [[UIApplication sharedApplication] keyWindow];
+    }
+    
+    if (keyWindow) {
         [keyWindow addSubview:self];
         [keyWindow bringSubviewToFront:self];
         
