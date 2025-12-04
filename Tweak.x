@@ -999,12 +999,6 @@ static BOOL isAuthenticationShowed = FALSE;
 }
 %end
 %hook AWEPlayVideoPlayerController
-// 声明我们添加的新方法
-%new - (void)stopTimeUpdateTimer;
-%new - (double)currentPlaybackTime;
-%new - (void)startTimeUpdateTimer;
-%new - (void)updateTimeLabels;
-
 - (void)containerDidFullyDisplayWithReason:(NSInteger)arg1 {
     if ([[[self container] parentViewController] isKindOfClass:%c(AWENewFeedTableViewController)] && [BHIManager skipRecommendations]) {
         AWENewFeedTableViewController *rootVC = [[self container] parentViewController];
@@ -1483,27 +1477,40 @@ static BOOL isAuthenticationShowed = FALSE;
         if ([model respondsToSelector:@selector(video)]) {
             id video = [model video];
             if ([video respondsToSelector:@selector(duration)]) {
-                // 使用类型转换解决方法歧义
-                SEL durationSelector = @selector(duration);
-                NSMethodSignature *signature = [video methodSignatureForSelector:durationSelector];
-                if (signature) {
-                    const char *returnType = [signature methodReturnType];
-                    // 检查返回类型
-                    if (strcmp(returnType, @encode(NSNumber *)) == 0) {
-                        NSNumber *duration = [video performSelector:durationSelector];
-                        if (duration) {
-                            NSTimeInterval totalSeconds = [duration doubleValue];
-                            NSInteger minutes = totalSeconds / 60;
-                            NSInteger seconds = (NSInteger)totalSeconds % 60;
-                            totalDurationLabel.text = [NSString stringWithFormat:@"%ld:%02ld", (long)minutes, (long)seconds];
+                // 使用更安全的方式获取视频时长，避免performSelector
+                NSTimeInterval duration = 0.0;
+                
+                // 首先尝试直接使用KVC
+                id durationValue = [video valueForKey:@"duration"];
+                if ([durationValue isKindOfClass:[NSNumber class]]) {
+                    duration = [(NSNumber *)durationValue doubleValue];
+                } else if ([durationValue isKindOfClass:[NSDecimalNumber class]]) {
+                    duration = [(NSDecimalNumber *)durationValue doubleValue];
+                } else {
+                    // 尝试获取原始视频时长
+                    id rawDuration = [video valueForKey:@"rawDuration"];
+                    if ([rawDuration isKindOfClass:[NSNumber class]]) {
+                        duration = [(NSNumber *)rawDuration doubleValue];
+                    } else if ([rawDuration isKindOfClass:[NSDecimalNumber class]]) {
+                        duration = [(NSDecimalNumber *)rawDuration doubleValue];
+                    } else {
+                        // 尝试获取视频模型
+                        id videoModel = [video valueForKey:@"videoModel"];
+                        if (videoModel) {
+                            id modelDuration = [videoModel valueForKey:@"duration"];
+                            if ([modelDuration isKindOfClass:[NSNumber class]]) {
+                                duration = [(NSNumber *)modelDuration doubleValue];
+                            } else if ([modelDuration isKindOfClass:[NSDecimalNumber class]]) {
+                                duration = [(NSDecimalNumber *)modelDuration doubleValue];
+                            }
                         }
-                    } else if (strcmp(returnType, @encode(NSTimeInterval)) == 0 || strcmp(returnType, @encode(CGFloat)) == 0) {
-                        NSTimeInterval duration = [(id)video performSelector:durationSelector];
-                        NSInteger minutes = duration / 60;
-                        NSInteger seconds = (NSInteger)duration % 60;
-                        totalDurationLabel.text = [NSString stringWithFormat:@"%ld:%02ld", (long)minutes, (long)seconds];
                     }
                 }
+                
+                // 设置总时长标签
+                NSInteger minutes = duration / 60;
+                NSInteger seconds = (NSInteger)duration % 60;
+                totalDurationLabel.text = [NSString stringWithFormat:@"%ld:%02ld", (long)minutes, (long)seconds];
             }
         }
         
